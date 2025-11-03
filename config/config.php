@@ -9,8 +9,8 @@ define('ROOT', dirname(__FILE__));
 // === THÔNG TIN KẾT NỐI AZURE CỦA BẠN ===
 $host     = 'mysql-lab-db.mysql.database.azure.com';  // Host Azure
 $dbname   = 'lienquan_shop';                         // TÊN DB MỚI (phải tạo)
-$username = 'sqladmin@mysql-lab-db';                  // Username + @server
-$password = 'Long2209';                               // Password của bạn
+$username = 'sqladmin';                  // Username + @server
+$password = 'Long2209@';                               // Password của bạn
 
 try {
     // Kết nối với charset utf8 + SSL (bắt buộc trên Azure)
