@@ -182,6 +182,40 @@
 				margin: 20px 0;
 				box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 			}
+			
+			/* Header styles */
+			.header-top {
+				background: #f8f9fa;
+				padding: 10px 0;
+				border-bottom: 1px solid #dee2e6;
+			}
+			
+			.contact-info {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				flex-wrap: wrap;
+			}
+			
+			.contact-details {
+				display: flex;
+				gap: 20px;
+				font-size: 14px;
+			}
+			
+			.user-actions {
+				display: flex;
+				gap: 15px;
+			}
+			
+			.user-action-item {
+				cursor: pointer;
+				font-size: 14px;
+			}
+			
+			.user-action-item:hover {
+				color: #d32f2f;
+			}
 		</style>
 
 		<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -193,9 +227,28 @@
 
     </head>
 	<body onload="SetDefault();">
-		<!-- HEADER -->
-		<?php include_once 'subpage/header.php'; ?>
-		<!-- /HEADER -->
+		<!-- HEADER TOP -->
+		<div class="header-top">
+			<div class="container">
+				<div class="contact-info">
+					<div class="contact-details">
+						<div><strong>HTP</strong></div>
+						<div>0878-216-018</div>
+						<div>tieulong.work@gmail.com</div>
+						<div>53 Võ Văn Ngân, TP Thủ Đức</div>
+					</div>
+					<div class="user-actions">
+						<div class="user-action-item">Tất cả</div>
+						<div class="user-action-item">Search</div>
+						<div class="user-action-item">Kiểm tra đơn hàng</div>
+						<div class="user-action-item">Đăng nhập/Đăng ký</div>
+						<div class="user-action-item">DS yêu thích</div>
+						<div class="user-action-item">Giỏ hàng</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- /HEADER TOP -->
 
 		<!-- NAVIGATION -->
 		<?php include_once 'subpage/navigation.html'; ?>
