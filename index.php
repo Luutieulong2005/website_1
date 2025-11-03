@@ -1,13 +1,12 @@
 <?php
 if(!isset($_SESSION)) session_start();
 
-?>
-<?php
 // Kiểm tra user đã đăng nhập
 $user_name = '';
 if (isset($_SESSION['user_id'])) {
     $user_name = $_SESSION['user_name'];
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -77,351 +76,373 @@ if (isset($_POST['buy_account'])) {
     }
 }
 ?>
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		 <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shop Nick Liên Quân Mobile</title>
 
-		<title>Shop Nick Liên Quân Mobile</title>
+    <link rel="shortcut icon" href="img/favicon.png">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link type="text/css" rel="stylesheet" href="css/slick.css"/>
+    <link type="text/css" rel="stylesheet" href="css/slick-theme.css"/>
+    <link type="text/css" rel="stylesheet" href="css/nouislider.min.css"/>
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link type="text/css" rel="stylesheet" href="css/style.css"/>
 
-		<link rel="shortcut icon" href="img/favicon.png">
-		<!-- Google font -->
-		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700" rel="stylesheet">
+    <style>
+        /* CSS cho tài khoản */
+        .account-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .account-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .username {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+        }
+        
+        .rank {
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+        
+        .rank-Cao-Thủ { background: linear-gradient(45deg, #ff6b6b, #ee5a24); }
+        .rank-Kim-Cương { background: linear-gradient(45deg, #a29bfe, #6c5ce7); }
+        .rank-Tinh-Anh { background: linear-gradient(45deg, #fd79a8, #e84393); }
+        .rank-Vàng { background: linear-gradient(45deg, #fdcb6e, #e17055); }
+        .rank-Bạc { background: linear-gradient(45deg, #dfe6e9, #b2bec3); }
+        
+        .account-details {
+            margin-bottom: 15px;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .price {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .buy-btn {
+            width: 100%;
+            padding: 12px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .buy-btn:hover {
+            background: #219a52;
+        }
+        
+        .search-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-		<!-- Bootstrap -->
-		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+        /* CSS HEADER TOP MỚI */
+        .header-top {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 12px 0;
+            font-size: 14px;
+            border-bottom: 3px solid #e74c3c;
+        }
 
-		<!-- Slick -->
-		<link type="text/css" rel="stylesheet" href="css/slick.css"/>
-		<link type="text/css" rel="stylesheet" href="css/slick-theme.css"/>
+        .contact-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
 
-		<!-- nouislider -->
-		<link type="text/css" rel="stylesheet" href="css/nouislider.min.css"/>
+        .contact-details {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+        }
 
-		<!-- Font Awesome Icon -->
-		<link rel="stylesheet" href="css/font-awesome.min.css">
+        .contact-details div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-		<!-- Custom stlylesheet -->
-		<link type="text/css" rel="stylesheet" href="css/style.css"/>
+        .user-actions {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
 
-		<style>
-			/* Custom styles for Lien Quan Shop */
-			.account-card {
-				background: white;
-				border-radius: 10px;
-				padding: 20px;
-				box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-				transition: transform 0.3s ease;
-				margin-bottom: 20px;
-			}
-			
-			.account-card:hover {
-				transform: translateY(-5px);
-			}
-			
-			.account-header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				margin-bottom: 15px;
-			}
-			
-			.username {
-				font-weight: bold;
-				font-size: 1.2em;
-				color: #333;
-			}
-			
-			.rank {
-				color: white;
-				padding: 5px 10px;
-				border-radius: 15px;
-				font-size: 0.9em;
-			}
-			
-			.rank-Cao-Thủ { background: linear-gradient(45deg, #ff6b6b, #ee5a24); }
-			.rank-Kim-Cương { background: linear-gradient(45deg, #a29bfe, #6c5ce7); }
-			.rank-Tinh-Anh { background: linear-gradient(45deg, #fd79a8, #e84393); }
-			.rank-Vàng { background: linear-gradient(45deg, #fdcb6e, #e17055); }
-			.rank-Bạc { background: linear-gradient(45deg, #dfe6e9, #b2bec3); }
-			
-			.account-details {
-				margin-bottom: 15px;
-			}
-			
-			.detail-item {
-				display: flex;
-				justify-content: space-between;
-				margin-bottom: 5px;
-				font-size: 0.9em;
-				color: #666;
-			}
-			
-			.price {
-				font-size: 1.5em;
-				font-weight: bold;
-				color: #e74c3c;
-				text-align: center;
-				margin: 15px 0;
-			}
-			
-			.buy-btn {
-				width: 100%;
-				padding: 12px;
-				background: #27ae60;
-				color: white;
-				border: none;
-				border-radius: 5px;
-				cursor: pointer;
-				font-size: 16px;
-				font-weight: bold;
-			}
-			
-			.buy-btn:hover {
-				background: #219a52;
-			}
-			
-			.search-section {
-				background: white;
-				padding: 30px;
-				border-radius: 10px;
-				margin: 20px 0;
-				box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-			}
-			
-			/* Header styles */
-			.header-top {
-				background: #f8f9fa;
-				padding: 10px 0;
-				border-bottom: 1px solid #dee2e6;
-			}
-			
-			.contact-info {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				flex-wrap: wrap;
-			}
-			
-			.contact-details {
-				display: flex;
-				gap: 20px;
-				font-size: 14px;
-			}
-			
-			.user-actions {
-				display: flex;
-				gap: 15px;
-			}
-			
-			.user-action-item {
-				cursor: pointer;
-				font-size: 14px;
-			}
-			
-			.user-action-item:hover {
-				color: #d32f2f;
-			}
-		</style>
+        .user-action-item {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
 
-		<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-		<!--[if lt IE 9]>
-		  <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-		  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-		<![endif]-->
+        .user-action-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
 
-    </head>
-	<body onload="SetDefault();">
-<!-- HEADER TOP -->
-<div class="header-top">
-    <div class="container">
-        <div class="contact-info">
-            <div class="contact-details">
-                <div><strong>HTP</strong></div>
-                <div>0878-216-018</div>
-                <div>tieulong.work@gmail.com</div>
-                <div>53 Võ Văn Ngân, TP Thủ Đức</div>
-            </div>
-            <div class="user-actions">
-                <div class="user-action-item">Tất cả</div>
-                <div class="user-action-item">Tìm kiếm</div>
-                <div class="user-action-item">Kiểm tra đơn hàng</div>
-                <?php if ($user_name): ?>
-                    <div class="user-action-item">Xin chào, <?php echo $user_name; ?></div>
-                    <div class="user-action-item"><a href="logout.php" style="color: inherit;">Đăng xuất</a></div>
-                <?php else: ?>
-                    <div class="user-action-item"><a href="login.php" style="color: inherit;">Đăng nhập/Đăng ký</a></div>
-                <?php endif; ?>
-                <div class="user-action-item">DS yêu thích</div>
-                <div class="user-action-item">Giỏ hàng</div>
+        .user-action-item a {
+            color: white !important;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .contact-details {
+                gap: 15px;
+            }
+            .user-actions {
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .contact-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .contact-details, .user-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body onload="SetDefault();">
+    <!-- HEADER TOP MỚI -->
+    <div class="header-top">
+        <div class="container">
+            <div class="contact-info">
+                <div class="contact-details">
+                    <div><strong>HTP - SHOP NICK LIÊN QUÂN</strong></div>
+                    <div>📞 0878-216-018</div>
+                    <div>📧 tieulong.work@gmail.com</div>
+                    <div>📍 53 Võ Văn Ngân, TP Thủ Đức</div>
+                </div>
+                <div class="user-actions">
+                    <div class="user-action-item"><a href="index.php">🏠 Trang chủ</a></div>
+                    <div class="user-action-item"><a href="#search">🔍 Tìm kiếm</a></div>
+                    <div class="user-action-item"><a href="#orders">📦 Kiểm tra đơn hàng</a></div>
+                    
+                    <?php if (!empty($user_name)): ?>
+                        <div class="user-action-item"><strong>👋 Xin chào, <?php echo htmlspecialchars($user_name); ?></strong></div>
+                        <div class="user-action-item"><a href="admin/logout.php">🚪 Đăng xuất</a></div>
+                    <?php else: ?>
+                        <div class="user-action-item"><a href="admin/login.php">🔐 Đăng nhập/Đăng ký</a></div>
+                    <?php endif; ?>
+                    
+                    <div class="user-action-item"><a href="#wishlist">❤️ DS yêu thích</a></div>
+                    <div class="user-action-item"><a href="#cart">🛒 Giỏ hàng</a></div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<!-- /HEADER TOP -->
+    <!-- /HEADER TOP -->
 
-		<!-- NAVIGATION -->
-		<?php include_once 'subpage/navigation.html'; ?>
-		<!-- /NAVIGATION -->
+    <!-- NAVIGATION -->
+    <?php include_once 'subpage/navigation.html'; ?>
+    <!-- /NAVIGATION -->
 
-		<!-- SECTION BANNER -->
-		<div id="banner" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 80px 0; color: white; text-align: center;">
-			<div class="container">
-				<h1>SHOP NICK LIÊN QUÂN MOBILE</h1>
-				<p>Uy tín - Chất lượng - Giá tốt nhất thị trường</p>
-			</div>
-		</div>
-		<!-- /SECTION BANNER -->
+    <!-- SECTION BANNER -->
+    <div id="banner" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 80px 0; color: white; text-align: center;">
+        <div class="container">
+            <h1>SHOP NICK LIÊN QUÂN MOBILE</h1>
+            <p>Uy tín - Chất lượng - Giá tốt nhất thị trường</p>
+        </div>
+    </div>
+    <!-- /SECTION BANNER -->
 
-<!-- SEARCH SECTION -->
-<div class="container">
-    <div class="search-section">
-        <form method="GET" action="">
+    <!-- SEARCH SECTION -->
+    <div class="container">
+        <div class="search-section">
+            <form method="GET" action="">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <input type="text" name="search" class="form-control" placeholder="Tìm kiếm theo username..." value="<?php echo htmlspecialchars($search); ?>">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <select name="rank" class="form-control">
+                                <option value="">Tất cả Rank</option>
+                                <option value="Cao Thủ" <?php echo $rank_filter == 'Cao Thủ' ? 'selected' : ''; ?>>Cao Thủ</option>
+                                <option value="Kim Cương" <?php echo $rank_filter == 'Kim Cương' ? 'selected' : ''; ?>>Kim Cương</option>
+                                <option value="Tinh Anh" <?php echo $rank_filter == 'Tinh Anh' ? 'selected' : ''; ?>>Tinh Anh</option>
+                                <option value="Vàng" <?php echo $rank_filter == 'Vàng' ? 'selected' : ''; ?>>Vàng</option>
+                                <option value="Bạc" <?php echo $rank_filter == 'Bạc' ? 'selected' : ''; ?>>Bạc</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <select name="price" class="form-control">
+                                <option value="">Tất cả giá</option>
+                                <option value="under500k" <?php echo $price_filter == 'under500k' ? 'selected' : ''; ?>>Dưới 500K</option>
+                                <option value="500k-1m" <?php echo $price_filter == '500k-1m' ? 'selected' : ''; ?>>500K - 1 Triệu</option>
+                                <option value="1m-2m" <?php echo $price_filter == '1m-2m' ? 'selected' : ''; ?>>1 Triệu - 2 Triệu</option>
+                                <option value="over2m" <?php echo $price_filter == 'over2m' ? 'selected' : ''; ?>>Trên 2 Triệu</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-block">Tìm kiếm</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- /SEARCH SECTION -->
+
+    <!-- ACCOUNTS SECTION -->
+    <div class="section">
+        <div class="container">
             <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <input type="text" name="search" class="form-control" placeholder="Tìm kiếm theo username..." value="<?php echo htmlspecialchars($search); ?>">
+                <div class="col-md-12">
+                    <div class="section-title">
+                        <h3 class="title">TÀI KHOẢN LIÊN QUÂN MOBILE</h3>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <select name="rank" class="form-control">
-                            <option value="">Tất cả Rank</option>
-                            <option value="Cao Thủ" <?php echo $rank_filter == 'Cao Thủ' ? 'selected' : ''; ?>>Cao Thủ</option>
-                            <option value="Kim Cương" <?php echo $rank_filter == 'Kim Cương' ? 'selected' : ''; ?>>Kim Cương</option>
-                            <option value="Tinh Anh" <?php echo $rank_filter == 'Tinh Anh' ? 'selected' : ''; ?>>Tinh Anh</option>
-                            <option value="Vàng" <?php echo $rank_filter == 'Vàng' ? 'selected' : ''; ?>>Vàng</option>
-                            <option value="Bạc" <?php echo $rank_filter == 'Bạc' ? 'selected' : ''; ?>>Bạc</option>
-                        </select>
+
+                <?php if (isset($_SESSION['message'])): ?>
+                    <div class="col-md-12">
+                        <div class="alert alert-success">
+                            <?php 
+                            echo $_SESSION['message']; 
+                            unset($_SESSION['message']);
+                            ?>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <select name="price" class="form-control">
-                            <option value="">Tất cả giá</option>
-                            <option value="under500k" <?php echo $price_filter == 'under500k' ? 'selected' : ''; ?>>Dưới 500K</option>
-                            <option value="500k-1m" <?php echo $price_filter == '500k-1m' ? 'selected' : ''; ?>>500K - 1 Triệu</option>
-                            <option value="1m-2m" <?php echo $price_filter == '1m-2m' ? 'selected' : ''; ?>>1 Triệu - 2 Triệu</option>
-                            <option value="over2m" <?php echo $price_filter == 'over2m' ? 'selected' : ''; ?>>Trên 2 Triệu</option>
-                        </select>
+                <?php endif; ?>
+
+                <?php foreach ($accounts as $account): ?>
+                    <div class="col-md-4">
+                        <div class="account-card">
+                            <div class="account-header">
+                                <div class="username"><?php echo htmlspecialchars($account['username']); ?></div>
+                                <div class="rank rank-<?php echo str_replace(' ', '-', $account['rank']); ?>">
+                                    <?php echo htmlspecialchars($account['rank']); ?>
+                                </div>
+                            </div>
+                            <div class="account-details">
+                                <div class="detail-item">
+                                    <span>Cấp độ:</span>
+                                    <span><?php echo $account['level']; ?></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span>Số tướng:</span>
+                                    <span><?php echo $account['hero_count']; ?></span>
+                                </div>
+                                <div class="detail-item">
+                                    <span>Số skin:</span>
+                                    <span><?php echo $account['skin_count']; ?></span>
+                                </div>
+                            </div>
+                            <div class="description">
+                                <?php echo htmlspecialchars($account['description']); ?>
+                            </div>
+                            <div class="price">
+                                <?php echo number_format($account['price'], 0, ',', '.'); ?> VNĐ
+                            </div>
+                            <button class="buy-btn" onclick="openModal(<?php echo $account['id']; ?>)">MUA NGAY</button>
+                        </div>
                     </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+    <!-- /ACCOUNTS SECTION -->
+
+    <!-- FOOTER -->
+    <?php include_once 'subpage/footer.html'; ?>
+    <!-- /FOOTER -->
+
+    <!-- Modal đặt mua -->
+    <div id="buyModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Đặt mua tài khoản</h4>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary btn-block">Tìm kiếm</button>
+                <div class="modal-body">
+                    <form method="POST" action="">
+                        <input type="hidden" name="account_id" id="account_id">
+                        <div class="form-group">
+                            <label>Họ và tên:</label>
+                            <input type="text" name="customer_name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" name="customer_email" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Số điện thoại:</label>
+                            <input type="tel" name="customer_phone" class="form-control" required>
+                        </div>
+                        <button type="submit" name="buy_account" class="btn btn-success btn-block">XÁC NHẬN ĐẶT MUA</button>
+                    </form>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
-</div>
-<!-- /SEARCH SECTION -->
 
-		<!-- ACCOUNTS SECTION -->
-		<div class="section">
-			<div class="container">
-				<div class="row">
-					<div class="col-md-12">
-						<div class="section-title">
-							<h3 class="title">TÀI KHOẢN LIÊN QUÂN MOBILE</h3>
-						</div>
-					</div>
-
-					<?php if (isset($_SESSION['message'])): ?>
-						<div class="col-md-12">
-							<div class="alert alert-success">
-								<?php 
-								echo $_SESSION['message']; 
-								unset($_SESSION['message']);
-								?>
-							</div>
-						</div>
-					<?php endif; ?>
-
-					<?php foreach ($accounts as $account): ?>
-						<div class="col-md-4">
-							<div class="account-card">
-								<div class="account-header">
-									<div class="username"><?php echo htmlspecialchars($account['username']); ?></div>
-									<div class="rank rank-<?php echo str_replace(' ', '-', $account['rank']); ?>">
-										<?php echo htmlspecialchars($account['rank']); ?>
-									</div>
-								</div>
-								<div class="account-details">
-									<div class="detail-item">
-										<span>Cấp độ:</span>
-										<span><?php echo $account['level']; ?></span>
-									</div>
-									<div class="detail-item">
-										<span>Số tướng:</span>
-										<span><?php echo $account['hero_count']; ?></span>
-									</div>
-									<div class="detail-item">
-										<span>Số skin:</span>
-										<span><?php echo $account['skin_count']; ?></span>
-									</div>
-								</div>
-								<div class="description">
-									<?php echo htmlspecialchars($account['description']); ?>
-								</div>
-								<div class="price">
-									<?php echo number_format($account['price'], 0, ',', '.'); ?> VNĐ
-								</div>
-								<button class="buy-btn" onclick="openModal(<?php echo $account['id']; ?>)">MUA NGAY</button>
-							</div>
-						</div>
-					<?php endforeach; ?>
-				</div>
-			</div>
-		</div>
-		<!-- /ACCOUNTS SECTION -->
-
-		<!-- FOOTER -->
-		<?php include_once 'subpage/footer.html'; ?>
-		<!-- /FOOTER -->
-
-		<!-- Modal đặt mua -->
-		<div id="buyModal" class="modal fade" role="dialog">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal">&times;</button>
-						<h4 class="modal-title">Đặt mua tài khoản</h4>
-					</div>
-					<div class="modal-body">
-						<form method="POST" action="">
-							<input type="hidden" name="account_id" id="account_id">
-							<div class="form-group">
-								<label>Họ và tên:</label>
-								<input type="text" name="customer_name" class="form-control" required>
-							</div>
-							<div class="form-group">
-								<label>Email:</label>
-								<input type="email" name="customer_email" class="form-control" required>
-							</div>
-							<div class="form-group">
-								<label>Số điện thoại:</label>
-								<input type="tel" name="customer_phone" class="form-control" required>
-							</div>
-							<button type="submit" name="buy_account" class="btn btn-success btn-block">XÁC NHẬN ĐẶT MUA</button>
-						</form>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<script src="js/jquery.min.js"></script>
-		<script src="js/bootstrap.min.js"></script>
-		<script src="js/slick.min.js"></script>
-		<script src="js/nouislider.min.js"></script>
-		<script src="js/jquery.zoom.min.js"></script>
-		<script src="js/main.js"></script>
-		
-		<script>
-			function openModal(accountId) {
-				document.getElementById('account_id').value = accountId;
-				$('#buyModal').modal('show');
-			}
-		</script>
-	</body>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/slick.min.js"></script>
+    <script src="js/nouislider.min.js"></script>
+    <script src="js/jquery.zoom.min.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        function openModal(accountId) {
+            document.getElementById('account_id').value = accountId;
+            $('#buyModal').modal('show');
+        }
+    </script>
+</body>
 </html>
