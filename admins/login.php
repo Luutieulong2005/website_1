@@ -1,8 +1,10 @@
 <?php
 session_start();
-// Sửa đường dẫn include
+// SỬA ĐƯỜNG DẪN
 include "../config/config.php";
 include "../include/function.php";
+spl_autoload_register("loadClass");
+
 $error = '';
 $success = '';
 
@@ -21,7 +23,7 @@ if (isset($_POST['login'])) {
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_role'] = $user['role'];
         
-        header("Location: index.php");
+        header("Location: ../index.php"); // SỬA ĐƯỜNG DẪN
         exit();
     } else {
         $error = "Email hoặc mật khẩu không đúng!";
@@ -63,9 +65,10 @@ if (isset($_POST['register'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập - Shop Nick Liên Quân</title>
-    <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="css/font-awesome.min.css">
-    <link type="text/css" rel="stylesheet" href="css/style.css"/>
+    <!-- SỬA ĐƯỜNG DẪN CSS -->
+    <link type="text/css" rel="stylesheet" href="../css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="../css/font-awesome.min.css">
+    <link type="text/css" rel="stylesheet" href="../css/style.css"/>
     <style>
         .login-section {
             background: white;
@@ -115,7 +118,8 @@ if (isset($_POST['register'])) {
                     <div>53 Võ Văn Ngân, TP Thủ Đức</div>
                 </div>
                 <div class="user-actions">
-                    <div class="user-action-item"><a href="index.php" style="color: inherit; text-decoration: none;">Trang chủ</a></div>
+                    <!-- SỬA ĐƯỜNG DẪN TRANG CHỦ -->
+                    <div class="user-action-item"><a href="../index.php" style="color: inherit; text-decoration: none;">Trang chủ</a></div>
                     <div class="user-action-item">Tìm kiếm</div>
                     <div class="user-action-item">Kiểm tra đơn hàng</div>
                     <div class="user-action-item">Đăng nhập/Đăng ký</div>
@@ -186,8 +190,8 @@ if (isset($_POST['register'])) {
     </div>
     <!-- /LOGIN SECTION -->
 
-    <!-- FOOTER -->
-    <?php include_once 'subpage/footer.html'; ?>
+    <!-- SỬA ĐƯỜNG DẪN FOOTER -->
+    <?php include_once "../subpage/footer.html"; ?>
     <!-- /FOOTER -->
 
     <script>
