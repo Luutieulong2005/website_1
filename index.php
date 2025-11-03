@@ -2,6 +2,13 @@
 if(!isset($_SESSION)) session_start();
 
 ?>
+<?php
+// Kiểm tra user đã đăng nhập
+$user_name = '';
+if (isset($_SESSION['user_id'])) {
+    $user_name = $_SESSION['user_name'];
+}
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <?php
@@ -241,7 +248,12 @@ if (isset($_POST['buy_account'])) {
                 <div class="user-action-item">Tất cả</div>
                 <div class="user-action-item">Tìm kiếm</div>
                 <div class="user-action-item">Kiểm tra đơn hàng</div>
-                <div class="user-action-item">Đăng nhập/Đăng ký</div>
+                <?php if ($user_name): ?>
+                    <div class="user-action-item">Xin chào, <?php echo $user_name; ?></div>
+                    <div class="user-action-item"><a href="logout.php" style="color: inherit;">Đăng xuất</a></div>
+                <?php else: ?>
+                    <div class="user-action-item"><a href="login.php" style="color: inherit;">Đăng nhập/Đăng ký</a></div>
+                <?php endif; ?>
                 <div class="user-action-item">DS yêu thích</div>
                 <div class="user-action-item">Giỏ hàng</div>
             </div>
@@ -249,7 +261,6 @@ if (isset($_POST['buy_account'])) {
     </div>
 </div>
 <!-- /HEADER TOP -->
-		<!-- /HEADER TOP -->
 
 		<!-- NAVIGATION -->
 		<?php include_once 'subpage/navigation.html'; ?>
