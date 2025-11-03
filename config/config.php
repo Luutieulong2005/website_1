@@ -1,16 +1,21 @@
 <?php
-// config/config.php - File cấu hình
-define('DB_HOST', 'mysql-lab-db.mysql.database.azure.com');
-define('DB_NAME', 'lienquan_shop');
-define('DB_USER', 'sqladmin');
-define('DB_PASS', 'Long2209@');
-define('DB_CHARSET', 'utf8mb4');
+$configDB = array();
+$configDB["host"] 		= "mysql-lab-db.mysql.database.azure.com";
+$configDB["database"]	= "lienquan_shop";
+$configDB["username"] 	= "sqladmin";
+$configDB["password"] 	= "Long2209@";
+define("HOST", "mysql-lab-db.mysql.database.azure.com");
+define("DB_NAME", "lienquan_shop");
+define("DB_USER", "sqladmin");
+define("DB_PASS", "Long2209@");
+define('ROOT', dirname(dirname(__FILE__) ) );
+//Thu muc tuyet doi truoc cua config; c:/wamp/www/lab/
+define("BASE_URL", "http://".$_SERVER['SERVER_NAME']);//dia chi website
 
-define('SITE_NAME', 'Shop Nick Liên Quân Mobile');
-
+// Kết nối database
 try {
     $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET,
+        "mysql:host=" . HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
         DB_USER,
         DB_PASS,
         [
@@ -21,9 +26,5 @@ try {
     );
 } catch(PDOException $e) {
     die("Lỗi kết nối database: " . $e->getMessage());
-}
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
 }
 ?>
