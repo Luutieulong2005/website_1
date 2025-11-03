@@ -1,29 +1,36 @@
 <?php
-function loadClass($c)
-{
-	include ROOT."/classes/".$c.".class.php";
+function loadClass($className) {
+    $file = ROOT . '/classes/' . $className . '.php';
+    if (file_exists($file)) {
+        include $file;
+    }
 }
 
-function getIndex($index, $value='')
-{
-	$data = isset($_GET[$index])?$_GET[$index]:$value;
-	return $data;
+function formatPrice($price) {
+    return number_format($price, 0, ',', '.') . ' VNĐ';
 }
 
-function postIndex($index, $value='')
-{
-	$data = isset($_POST[$index])?$_POST[$index]:$value;
-	return $data;
+function getRankColor($rank) {
+    $colors = [
+        'Cao Thủ' => '#ff6b6b',
+        'Kim Cương' => '#a29bfe', 
+        'Tinh Anh' => '#fd79a8',
+        'Vàng' => '#fdcb6e',
+        'Bạc' => '#dfe6e9'
+    ];
+    return $colors[$rank] ?? '#cccccc';
 }
 
-function requestIndex($index, $value='')
-{
-	$data = isset($_REQUEST[$index])?$_REQUEST[$index]:$value;
-	return $data;
+function redirect($url) {
+    header("Location: $url");
+    exit();
 }
 
-function fileIndex($index,$value=''){
-	$data = isset($_FILES[$index])?$_FILES[$index]:$value;
-	return $data;
+function isLoggedIn() {
+    return isset($_SESSION['user_id']);
+}
+
+function isAdmin() {
+    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
 }
 ?>
