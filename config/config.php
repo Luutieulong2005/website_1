@@ -1,30 +1,16 @@
 <?php
-$configDB = array();
-$configDB["host"] 		= "mysql-lab-db.mysql.database.azure.com";
-$configDB["database"]	= "lienquan_shop";
-$configDB["username"] 	= "sqladmin";
-$configDB["password"] 	= "Long2209@";
-define("HOST", "mysql-lab-db.mysql.database.azure.com");
-define("DB_NAME", "lienquan_shop");
-define("DB_USER", "sqladmin");
-define("DB_PASS", "Long2209@");
-define('ROOT', dirname(dirname(__FILE__) ) );
-//Thu muc tuyet doi truoc cua config; c:/wamp/www/lab/
-define("BASE_URL", "http://".$_SERVER['SERVER_NAME']);//dia chi website
+define('ROOT', dirname(dirname(__FILE__)));
 
-// Kết nối database
+// CẤU HÌNH DATABASE CỦA BẠN - SỬA THÔNG TIN NÀY
+$host = 'mysql-lab-db.mysql.database.azure.com';  // Host của bạn
+$dbname = 'lienquan_shop';                        // Tên database
+$username = 'username_cua_ban';                   // SỬA: username của bạn
+$password = 'password_cua_ban';                   // SỬA: password của bạn
+
 try {
-    $pdo = new PDO(
-        "mysql:host=" . HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-        DB_USER,
-        DB_PASS,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]
-    );
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
-    die("Lỗi kết nối database: " . $e->getMessage());
+    die("Kết nối database thất bại: " . $e->getMessage());
 }
 ?>
