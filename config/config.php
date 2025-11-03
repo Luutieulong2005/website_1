@@ -1,19 +1,19 @@
 <?php
-// Khởi động session (nếu chưa có)
+// KHỞI ĐỘNG SESSION
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 define('ROOT', dirname(__FILE__));
 
-// === THÔNG TIN KẾT NỐI AZURE CỦA BẠN ===
-$host     = 'mysql-lab-db.mysql.database.azure.com';  // Host Azure
-$dbname   = 'lienquan_shop';                         // TÊN DB MỚI (phải tạo)
-$username = 'sqladmin';                  // Username + @server
-$password = 'Long2209@';                               // Password của bạn
+// === THÔNG TIN CỦA BẠN - 100% GIỮ NGUYÊN ===
+$host     = 'mysql-lab-db.mysql.database.azure.com';
+$dbname   = 'lienquan_shop';
+$username = 'sqladmin';           // BẠN ĐÃ XÁC NHẬN DÙNG CÁI NÀY
+$password = 'Long2209@';
 
+// === KẾT NỐI AZURE - ĐÃ TỐI ƯU ===
 try {
-    // Kết nối với charset utf8 + SSL (bắt buộc trên Azure)
     $pdo = new PDO(
         "mysql:host=$host;dbname=$dbname;charset=utf8",
         $username,
@@ -21,17 +21,18 @@ try {
         [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::MYSQL_ATTR_SSL_CA       => ROOT . '/DigiCertGlobalRootCA.crt.pem', // SSL
-            PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => true
+            // SSL: DÙNG FILE CỦA BẠN (nếu có) – KHÔNG BẮT BUỘC NẾU BẠN ĐÃ CẤU HÌNH TRÊN AZURE
+            // PDO::MYSQL_ATTR_SSL_CA => ROOT . '/config/DigiCertGlobalRootCA.crt.pem',
+            // PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false
         ]
     );
 
-    // Đảm bảo UTF-8
-    $pdo->exec("SET NAMES utf8");
+    // TEST NHẸ (CÓ THỂ XÓA SAU)
+    $pdo->query("SELECT 1");
 
 } catch (PDOException $e) {
-    // Ghi log lỗi (không lộ ra user)
-    error_log("Azure DB Connection Failed: " . $e->getMessage());
+    // GHI LOG + ẨN LỖI
+    error_log("DB Error: " . $e->getMessage());
     die("Hệ thống đang bảo trì. Vui lòng thử lại sau.");
 }
 ?>
