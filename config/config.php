@@ -1,7 +1,7 @@
 <?php
 // config/config.php - File cấu hình
 define('DB_HOST', 'mysql-lab-db.mysql.database.azure.com');
-define('DB_NAME', 'computer_store');
+define('DB_NAME', 'lienquan_shop');
 define('DB_USER', 'sqladmin');
 define('DB_PASS', 'Long2209@');
 define('DB_CHARSET', 'utf8');
