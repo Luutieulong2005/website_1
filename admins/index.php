@@ -22,8 +22,11 @@ $total_orders = $stmt->fetch()['total_orders'];
 
 $stmt = $pdo->query("SELECT COUNT(*) as total_users FROM users");
 $total_users = $stmt->fetch()['total_users'];
-?>
 
+// Lấy doanh thu
+$stmt = $pdo->query("SELECT SUM(total_amount) as revenue FROM orders WHERE status = 'completed'");
+$revenue = $stmt->fetch()['revenue'] ?: 0;
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -32,7 +35,6 @@ $total_users = $stmt->fetch()['total_users'];
     <title>Admin Panel - Shop Nick Liên Quân</title>
     <link type="text/css" rel="stylesheet" href="../css/bootstrap.min.css"/>
     <link rel="stylesheet" href="../css/font-awesome.min.css">
-    <link type="text/css" rel="stylesheet" href="../css/style.css"/>
     <style>
         .sidebar {
             background: #2c3e50;
@@ -89,6 +91,11 @@ $total_users = $stmt->fetch()['total_users'];
             border-radius: 10px;
             margin-bottom: 30px;
         }
+        .revenue {
+            font-size: 1.8em;
+            color: #27ae60;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -97,14 +104,15 @@ $total_users = $stmt->fetch()['total_users'];
             <h4>🛡️ ADMIN PANEL</h4>
             <small>Shop Nick Liên Quân</small>
         </div>
-        <div class="nav flex-column">
+        <nav class="nav flex-column">
             <a class="nav-link active" href="index.php">📊 Dashboard</a>
             <a class="nav-link" href="accounts.php">🎮 Quản lý tài khoản</a>
             <a class="nav-link" href="orders.php">📦 Quản lý đơn hàng</a>
             <a class="nav-link" href="users.php">👥 Quản lý users</a>
+            <a class="nav-link" href="upload_image.php">📷 Upload hình ảnh</a>
             <a class="nav-link" href="../index.php">🏠 Về trang chủ</a>
             <a class="nav-link" href="logout.php">🚪 Đăng xuất</a>
-        </div>
+        </nav>
     </div>
 
     <div class="main-content">
@@ -146,16 +154,21 @@ $total_users = $stmt->fetch()['total_users'];
         </div>
 
         <div class="row mt-4">
-            <div class="col-md-12">
+            <div class="col-md-6">
+                <div class="stat-card">
+                    <h4>💰 Doanh thu</h4>
+                    <div class="revenue"><?php echo number_format($revenue, 0, ',', '.'); ?> VNĐ</div>
+                    <p class="text-muted">Tổng doanh thu từ đơn hàng đã hoàn thành</p>
+                </div>
+            </div>
+            <div class="col-md-6">
                 <div class="stat-card">
                     <h4>📈 Thống kê nhanh</h4>
-                    <p>Chào mừng đến với trang quản trị Shop Nick Liên Quân Mobile!</p>
                     <p><strong>Email đăng nhập:</strong> <?php echo $_SESSION['user_email']; ?></p>
                     <p><strong>Vai trò:</strong> <?php echo $_SESSION['user_role']; ?></p>
                     <div class="mt-3">
                         <a href="accounts.php" class="btn btn-primary">🎮 Quản lý tài khoản</a>
-                        <a href="orders.php" class="btn btn-success">📦 Quản lý đơn hàng</a>
-                        <a href="users.php" class="btn btn-info">👥 Quản lý users</a>
+                        <a href="upload_image.php" class="btn btn-success">📷 Upload ảnh</a>
                     </div>
                 </div>
             </div>
