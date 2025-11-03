@@ -1,7 +1,7 @@
 <?php
 if(!isset($_SESSION)) session_start();
 
-// Xử lý đăng ký user - THÊM ĐOẠN NÀY
+// Xử lý đăng ký user
 if (isset($_POST['register_user'])) {
     $name = $_POST['name'];
     $email = $_POST['email'];
@@ -9,6 +9,9 @@ if (isset($_POST['register_user'])) {
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     
+    include "config/config.php";
+    
+    // Kiểm tra email tồn tại
     $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
     $stmt->execute([$email]);
     
@@ -36,10 +39,6 @@ if (isset($_SESSION['user_id'])) {
     $user_name = $_SESSION['user_name'];
 }
 
-?>
-<!DOCTYPE html>
-<html lang="vi">
-<?php
 include "config/config.php";
 include ROOT."/include/function.php";
 spl_autoload_register("loadClass");
@@ -105,6 +104,8 @@ if (isset($_POST['buy_account'])) {
     }
 }
 ?>
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -259,6 +260,26 @@ if (isset($_POST['buy_account'])) {
             gap: 5px;
         }
 
+        /* Hình ảnh tài khoản */
+        .account-image {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .account-image img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 3px solid #f8f9fa;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .account-image img:hover {
+            transform: scale(1.02);
+            transition: transform 0.3s ease;
+        }
+
         /* Responsive */
         @media (max-width: 1200px) {
             .contact-details {
@@ -295,16 +316,16 @@ if (isset($_POST['buy_account'])) {
                 <div class="user-actions">
                     <div class="user-action-item"><a href="index.php">🏠 Trang chủ</a></div>
                     <div class="user-action-item"><a href="#search">🔍 Tìm kiếm</a></div>
-                    <div class="user-action-item"><a href="#orders">📦 Kiểm tra đơn hàng</a></div>
+                    <div class="user-action-item"><a href="#orders">📦 Đơn hàng</a></div>
                     
                     <?php if (!empty($user_name)): ?>
-                        <div class="user-action-item"><strong>👋 Xin chào, <?php echo htmlspecialchars($user_name); ?></strong></div>
-                        <div class="user-action-item"><a href="admin/logout.php">🚪 Đăng xuất</a></div>
+                        <div class="user-action-item"><strong>👋 <?php echo htmlspecialchars($user_name); ?></strong></div>
+                        <div class="user-action-item"><a href="admins/logout.php">🚪 Đăng xuất</a></div>
                     <?php else: ?>
-                        <div class="user-action-item"><a href="admin/login.php">🔐 Đăng nhập/Đăng ký</a></div>
+                        <div class="user-action-item"><a href="admins/login.php">🔐 Đăng nhập/Đăng ký</a></div>
                     <?php endif; ?>
                     
-                    <div class="user-action-item"><a href="#wishlist">❤️ DS yêu thích</a></div>
+                    <div class="user-action-item"><a href="#wishlist">❤️ Yêu thích</a></div>
                     <div class="user-action-item"><a href="#cart">🛒 Giỏ hàng</a></div>
                 </div>
             </div>
@@ -388,9 +409,44 @@ if (isset($_POST['buy_account'])) {
                     </div>
                 <?php endif; ?>
 
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="col-md-12">
+                        <div class="alert alert-danger">
+                            <?php 
+                            echo $_SESSION['error']; 
+                            unset($_SESSION['error']);
+                            ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['success'])): ?>
+                    <div class="col-md-12">
+                        <div class="alert alert-success">
+                            <?php 
+                            echo $_SESSION['success']; 
+                            unset($_SESSION['success']);
+                            ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <?php foreach ($accounts as $account): ?>
                     <div class="col-md-4">
                         <div class="account-card">
+                            <!-- HÌNH ẢNH TÀI KHOẢN -->
+                            <div class="account-image">
+                                <?php if (!empty($account['image']) && file_exists('uploads/accounts/' . $account['image'])): ?>
+                                    <img src="uploads/accounts/<?php echo htmlspecialchars($account['image']); ?>" 
+                                         alt="<?php echo htmlspecialchars($account['username']); ?>" 
+                                         class="img-fluid">
+                                <?php else: ?>
+                                    <img src="images/default-account.jpg" 
+                                         alt="Default Image" 
+                                         class="img-fluid">
+                                <?php endif; ?>
+                            </div>
+                            
                             <div class="account-header">
                                 <div class="username"><?php echo htmlspecialchars($account['username']); ?></div>
                                 <div class="rank rank-<?php echo str_replace(' ', '-', $account['rank']); ?>">
@@ -460,6 +516,43 @@ if (isset($_POST['buy_account'])) {
         </div>
     </div>
 
+    <!-- Modal Đăng ký User -->
+    <div id="registerModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">🔐 Đăng ký Tài khoản</h4>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="">
+                        <div class="form-group">
+                            <label>Họ và tên:</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Số điện thoại:</label>
+                            <input type="tel" name="phone" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Mật khẩu:</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Xác nhận mật khẩu:</label>
+                            <input type="password" name="confirm_password" class="form-control" required>
+                        </div>
+                        <button type="submit" name="register_user" class="btn btn-success btn-block">ĐĂNG KÝ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/slick.min.js"></script>
@@ -471,6 +564,10 @@ if (isset($_POST['buy_account'])) {
         function openModal(accountId) {
             document.getElementById('account_id').value = accountId;
             $('#buyModal').modal('show');
+        }
+        
+        function openRegisterModal() {
+            $('#registerModal').modal('show');
         }
     </script>
 </body>
