@@ -4,7 +4,7 @@ define('DB_HOST', 'mysql-lab-db.mysql.database.azure.com');
 define('DB_NAME', 'lienquan_shop');
 define('DB_USER', 'sqladmin');
 define('DB_PASS', 'Long2209@');
-define('DB_CHARSET', 'utf8');
+define('DB_CHARSET', 'utf8mb4');
 
 define('SITE_NAME', 'Shop Nick Liên Quân Mobile');
 
@@ -16,8 +16,7 @@ try {
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_SSL_VERIFY_SERVER_CERT => false, // Thêm dòng này cho Azure MySQL
-            PDO::MYSQL_ATTR_SSL_CA => '/path/to/BaltimoreCyberTrustRoot.crt.pem' // Nếu cần SSL
+            PDO::ATTR_EMULATE_PREPARES => false
         ]
     );
 } catch(PDOException $e) {
