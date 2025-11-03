@@ -1,74 +1,74 @@
 <?php
-	if(!isset($_SESSION)) session_start();
-	
+if(!isset($_SESSION)) session_start();
+
 ?>
 <!DOCTYPE html>
 <html lang="vi">
 <?php
-	include "config/config.php";
-	include ROOT."/include/function.php";
-	spl_autoload_register("loadClass");
-	
-	// Xử lý tìm kiếm và lọc
-	$search = $_GET['search'] ?? '';
-	$rank_filter = $_GET['rank'] ?? '';
-	$price_filter = $_GET['price'] ?? '';
+include "config/config.php";
+include ROOT."/include/function.php";
+spl_autoload_register("loadClass");
 
-	// Xây dựng query
-	$sql = "SELECT * FROM accounts WHERE status = 'available'";
-	$params = [];
+// Xử lý tìm kiếm và lọc
+$search = $_GET['search'] ?? '';
+$rank_filter = $_GET['rank'] ?? '';
+$price_filter = $_GET['price'] ?? '';
 
-	if (!empty($search)) {
-		$sql .= " AND (username LIKE ? OR description LIKE ?)";
-		$params[] = "%$search%";
-		$params[] = "%$search%";
-	}
+// Xây dựng query
+$sql = "SELECT * FROM accounts WHERE status = 'available'";
+$params = [];
 
-	if (!empty($rank_filter)) {
-		$sql .= " AND rank = ?";
-		$params[] = $rank_filter;
-	}
+if (!empty($search)) {
+    $sql .= " AND (username LIKE ? OR description LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+}
 
-	if (!empty($price_filter)) {
-		switch ($price_filter) {
-			case 'under500k': $sql .= " AND price <= 500000"; break;
-			case '500k-1m': $sql .= " AND price BETWEEN 500000 AND 1000000"; break;
-			case '1m-2m': $sql .= " AND price BETWEEN 1000000 AND 2000000"; break;
-			case 'over2m': $sql .= " AND price > 2000000"; break;
-		}
-	}
+if (!empty($rank_filter)) {
+    $sql .= " AND rank = ?";
+    $params[] = $rank_filter;
+}
 
-	$sql .= " ORDER BY price ASC";
-	$stmt = $pdo->prepare($sql);
-	$stmt->execute($params);
-	$accounts = $stmt->fetchAll();
+if (!empty($price_filter)) {
+    switch ($price_filter) {
+        case 'under500k': $sql .= " AND price <= 500000"; break;
+        case '500k-1m': $sql .= " AND price BETWEEN 500000 AND 1000000"; break;
+        case '1m-2m': $sql .= " AND price BETWEEN 1000000 AND 2000000"; break;
+        case 'over2m': $sql .= " AND price > 2000000"; break;
+    }
+}
 
-	// Xử lý mua nick
-	if (isset($_POST['buy_account'])) {
-		$account_id = $_POST['account_id'];
-		$customer_name = $_POST['customer_name'];
-		$customer_email = $_POST['customer_email'];
-		$customer_phone = $_POST['customer_phone'];
-		
-		// Lấy thông tin tài khoản
-		$stmt = $pdo->prepare("SELECT * FROM accounts WHERE id = ?");
-		$stmt->execute([$account_id]);
-		$account = $stmt->fetch();
-		
-		if ($account) {
-			// Tạo đơn hàng
-			$stmt = $pdo->prepare("INSERT INTO orders (account_id, customer_name, customer_email, customer_phone, total_amount) VALUES (?, ?, ?, ?, ?)");
-			$stmt->execute([$account_id, $customer_name, $customer_email, $customer_phone, $account['price']]);
-			
-			// Cập nhật trạng thái tài khoản
-			$stmt = $pdo->prepare("UPDATE accounts SET status = 'sold' WHERE id = ?");
-			$stmt->execute([$account_id]);
-			
-			$_SESSION['message'] = "Đặt mua thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.";
-			header("Location: " . $_SERVER['PHP_SELF']);
-			exit();
-		}
-	}
+$sql .= " ORDER BY price ASC";
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$accounts = $stmt->fetchAll();
+
+// Xử lý mua nick
+if (isset($_POST['buy_account'])) {
+    $account_id = $_POST['account_id'];
+    $customer_name = $_POST['customer_name'];
+    $customer_email = $_POST['customer_email'];
+    $customer_phone = $_POST['customer_phone'];
+    
+    // Lấy thông tin tài khoản
+    $stmt = $pdo->prepare("SELECT * FROM accounts WHERE id = ?");
+    $stmt->execute([$account_id]);
+    $account = $stmt->fetch();
+    
+    if ($account) {
+        // Tạo đơn hàng
+        $stmt = $pdo->prepare("INSERT INTO orders (account_id, customer_name, customer_email, customer_phone, total_amount) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$account_id, $customer_name, $customer_email, $customer_phone, $account['price']]);
+        
+        // Cập nhật trạng thái tài khoản
+        $stmt = $pdo->prepare("UPDATE accounts SET status = 'sold' WHERE id = ?");
+        $stmt->execute([$account_id]);
+        
+        $_SESSION['message'] = "Đặt mua thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.";
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+}
 ?>
 	<head>
 		<meta charset="utf-8">
@@ -264,47 +264,47 @@
 		</div>
 		<!-- /SECTION BANNER -->
 
-		<!-- SEARCH SECTION -->
-		<div class="container">
-			<div class="search-section">
-				<form method="GET" action="">
-					<div class="row">
-						<div class="col-md-4">
-							<div class="form-group">
-								<input type="text" name="search" class="form-control" placeholder="Tìm kiếm theo username..." value="<?php echo htmlspecialchars($search); ?>">
-							</div>
-						</div>
-						<div class="col-md-3">
-							<div class="form-group">
-								<select name="rank" class="form-control">
-									<option value="">Tất cả Rank</option>
-									<option value="Cao Thủ" <?php echo $rank_filter == 'Cao Thủ' ? 'selected' : ''; ?>>Cao Thủ</option>
-									<option value="Kim Cương" <?php echo $rank_filter == 'Kim Cương' ? 'selected' : ''; ?>>Kim Cương</option>
-									<option value="Tinh Anh" <?php echo $rank_filter == 'Tinh Anh' ? 'selected' : ''; ?>>Tinh Anh</option>
-									<option value="Vàng" <?php echo $rank_filter == 'Vàng' ? 'selected' : ''; ?>>Vàng</option>
-									<option value="Bạc" <?php echo $rank_filter == 'Bạc' ? 'selected' : ''; ?>>Bạc</option>
-								</select>
-							</div>
-						</div>
-						<div class="col-md-3">
-							<div class="form-group">
-								<select name="price" class="form-control">
-									<option value="">Tất cả giá</option>
-									<option value="under500k" <?php echo $price_filter == 'under500k' ? 'selected' : ''; ?>>Dưới 500K</option>
-									<option value="500k-1m" <?php echo $price_filter == '500k-1m' ? 'selected' : ''; ?>>500K - 1 Triệu</option>
-									<option value="1m-2m" <?php echo $price_filter == '1m-2m' ? 'selected' : ''; ?>>1 Triệu - 2 Triệu</option>
-									<option value="over2m" <?php echo $price_filter == 'over2m' ? 'selected' : ''; ?>>Trên 2 Triệu</option>
-								</select>
-							</div>
-						</div>
-						<div class="col-md-2">
-							<button type="submit" class="btn btn-primary btn-block">Tìm kiếm</button>
-						</div>
-					</div>
-				</form>
-			</div>
-		</div>
-		<!-- /SEARCH SECTION -->
+<!-- SEARCH SECTION -->
+<div class="container">
+    <div class="search-section">
+        <form method="GET" action="">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <input type="text" name="search" class="form-control" placeholder="Tìm kiếm theo username..." value="<?php echo htmlspecialchars($search); ?>">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <select name="rank" class="form-control">
+                            <option value="">Tất cả Rank</option>
+                            <option value="Cao Thủ" <?php echo $rank_filter == 'Cao Thủ' ? 'selected' : ''; ?>>Cao Thủ</option>
+                            <option value="Kim Cương" <?php echo $rank_filter == 'Kim Cương' ? 'selected' : ''; ?>>Kim Cương</option>
+                            <option value="Tinh Anh" <?php echo $rank_filter == 'Tinh Anh' ? 'selected' : ''; ?>>Tinh Anh</option>
+                            <option value="Vàng" <?php echo $rank_filter == 'Vàng' ? 'selected' : ''; ?>>Vàng</option>
+                            <option value="Bạc" <?php echo $rank_filter == 'Bạc' ? 'selected' : ''; ?>>Bạc</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <select name="price" class="form-control">
+                            <option value="">Tất cả giá</option>
+                            <option value="under500k" <?php echo $price_filter == 'under500k' ? 'selected' : ''; ?>>Dưới 500K</option>
+                            <option value="500k-1m" <?php echo $price_filter == '500k-1m' ? 'selected' : ''; ?>>500K - 1 Triệu</option>
+                            <option value="1m-2m" <?php echo $price_filter == '1m-2m' ? 'selected' : ''; ?>>1 Triệu - 2 Triệu</option>
+                            <option value="over2m" <?php echo $price_filter == 'over2m' ? 'selected' : ''; ?>>Trên 2 Triệu</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary btn-block">Tìm kiếm</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- /SEARCH SECTION -->
 
 		<!-- ACCOUNTS SECTION -->
 		<div class="section">
