@@ -1,147 +1,413 @@
 <?php
-	if(!isset($_SESSION)) session_start();
-	
+session_start();
+
+// Xử lý tìm kiếm và lọc
+$search = $_GET['search'] ?? '';
+$rank_filter = $_GET['rank'] ?? '';
+$price_filter = $_GET['price'] ?? '';
+
+// Xây dựng query
+$sql = "SELECT * FROM accounts WHERE status = 'available'";
+$params = [];
+
+if (!empty($search)) {
+    $sql .= " AND (username LIKE ? OR description LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+}
+
+if (!empty($rank_filter)) {
+    $sql .= " AND rank = ?";
+    $params[] = $rank_filter;
+}
+
+if (!empty($price_filter)) {
+    switch ($price_filter) {
+        case 'under500k':
+            $sql .= " AND price <= 500000";
+            break;
+        case '500k-1m':
+            $sql .= " AND price BETWEEN 500000 AND 1000000";
+            break;
+        case '1m-2m':
+            $sql .= " AND price BETWEEN 1000000 AND 2000000";
+            break;
+        case 'over2m':
+            $sql .= " AND price > 2000000";
+            break;
+    }
+}
+
+$sql .= " ORDER BY price ASC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$accounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Xử lý mua nick
+if (isset($_POST['buy_account'])) {
+    $account_id = $_POST['account_id'];
+    $customer_name = $_POST['customer_name'];
+    $customer_email = $_POST['customer_email'];
+    $customer_phone = $_POST['customer_phone'];
+    
+    // Lấy thông tin tài khoản
+    $stmt = $pdo->prepare("SELECT * FROM accounts WHERE id = ?");
+    $stmt->execute([$account_id]);
+    $account = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($account) {
+        // Tạo đơn hàng
+        $stmt = $pdo->prepare("INSERT INTO orders (account_id, customer_name, customer_email, customer_phone, total_amount) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$account_id, $customer_name, $customer_email, $customer_phone, $account['price']]);
+        
+        // Cập nhật trạng thái tài khoản
+        $stmt = $pdo->prepare("UPDATE accounts SET status = 'sold' WHERE id = ?");
+        $stmt->execute([$account_id]);
+        
+        $_SESSION['message'] = "Đặt mua thành công! Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.";
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+}
 ?>
+
 <!DOCTYPE html>
-<html lang="en">
-<?php
-	include "config/config.php";
-	include ROOT."/include/function.php";
-	spl_autoload_register("loadClass");
-?>
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		 <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Nick Liên Quân Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-item input, .filter-item select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .filter-item button {
+            width: 100%;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .filter-item button:hover {
+            background: #764ba2;
+        }
+        
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .account-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .account-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .username {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+        }
+        
+        .rank {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+        
+        .account-details {
+            margin-bottom: 15px;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .price {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .buy-btn {
+            width: 100%;
+            padding: 12px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .buy-btn:hover {
+            background: #219a52;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SHOP NICK LIÊN QUÂN MOBILE</h1>
+            <p>Uy tín - Chất lượng - Giá tốt nhất thị trường</p>
+        </div>
 
-		<title>Trang chủ</title>
+        <?php if (isset($_SESSION['message'])): ?>
+            <div class="message success">
+                <?php 
+                echo $_SESSION['message']; 
+                unset($_SESSION['message']);
+                ?>
+            </div>
+        <?php endif; ?>
 
-		<link rel="shortcut icon" href="img/favicon.png">
-		<!-- Google font -->
-		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700" rel="stylesheet">
+        <div class="filters">
+            <form method="GET" action="">
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <input type="text" name="search" placeholder="Tìm kiếm theo username..." value="<?php echo htmlspecialchars($search); ?>">
+                    </div>
+                    <div class="filter-item">
+                        <select name="rank">
+                            <option value="">Tất cả Rank</option>
+                            <option value="Đồng" <?php echo $rank_filter == 'Đồng' ? 'selected' : ''; ?>>Đồng</option>
+                            <option value="Bạc" <?php echo $rank_filter == 'Bạc' ? 'selected' : ''; ?>>Bạc</option>
+                            <option value="Vàng" <?php echo $rank_filter == 'Vàng' ? 'selected' : ''; ?>>Vàng</option>
+                            <option value="Bạch Kim" <?php echo $rank_filter == 'Bạch Kim' ? 'selected' : ''; ?>>Bạch Kim</option>
+                            <option value="Kim Cương" <?php echo $rank_filter == 'Kim Cương' ? 'selected' : ''; ?>>Kim Cương</option>
+                            <option value="Cao Thủ" <?php echo $rank_filter == 'Cao Thủ' ? 'selected' : ''; ?>>Cao Thủ</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <select name="price">
+                            <option value="">Tất cả giá</option>
+                            <option value="under500k" <?php echo $price_filter == 'under500k' ? 'selected' : ''; ?>>Dưới 500K</option>
+                            <option value="500k-1m" <?php echo $price_filter == '500k-1m' ? 'selected' : ''; ?>>500K - 1 Triệu</option>
+                            <option value="1m-2m" <?php echo $price_filter == '1m-2m' ? 'selected' : ''; ?>>1 Triệu - 2 Triệu</option>
+                            <option value="over2m" <?php echo $price_filter == 'over2m' ? 'selected' : ''; ?>>Trên 2 Triệu</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <button type="submit">Tìm kiếm</button>
+                    </div>
+                </div>
+            </form>
+        </div>
 
-		<!-- Bootstrap -->
-		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+        <div class="accounts-grid">
+            <?php foreach ($accounts as $account): ?>
+                <div class="account-card">
+                    <div class="account-header">
+                        <div class="username"><?php echo htmlspecialchars($account['username']); ?></div>
+                        <div class="rank"><?php echo htmlspecialchars($account['rank']); ?></div>
+                    </div>
+                    <div class="account-details">
+                        <div class="detail-item">
+                            <span>Cấp độ:</span>
+                            <span><?php echo $account['level']; ?></span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Số tướng:</span>
+                            <span><?php echo $account['hero_count']; ?></span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Số skin:</span>
+                            <span><?php echo $account['skin_count']; ?></span>
+                        </div>
+                    </div>
+                    <div class="description">
+                        <?php echo htmlspecialchars($account['description']); ?>
+                    </div>
+                    <div class="price">
+                        <?php echo number_format($account['price'], 0, ',', '.'); ?> VNĐ
+                    </div>
+                    <button class="buy-btn" onclick="openModal(<?php echo $account['id']; ?>)">MUA NGAY</button>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
 
-		<!-- Slick -->
-		<link type="text/css" rel="stylesheet" href="css/slick.css"/>
-		<link type="text/css" rel="stylesheet" href="css/slick-theme.css"/>
+    <!-- Modal đặt mua -->
+    <div id="buyModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Đặt mua tài khoản</h2>
+            <form method="POST" action="">
+                <input type="hidden" name="account_id" id="account_id">
+                <div class="form-group">
+                    <label>Họ và tên:</label>
+                    <input type="text" name="customer_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" name="customer_email" required>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại:</label>
+                    <input type="tel" name="customer_phone" required>
+                </div>
+                <button type="submit" name="buy_account" class="buy-btn">XÁC NHẬN ĐẶT MUA</button>
+            </form>
+        </div>
+    </div>
 
-		<!-- nouislider -->
-		<link type="text/css" rel="stylesheet" href="css/nouislider.min.css"/>
-
-		<!-- Font Awesome Icon -->
-		<link rel="stylesheet" href="css/font-awesome.min.css">
-
-		<!-- Custom stlylesheet -->
-		<link type="text/css" rel="stylesheet" href="css/style.css"/>
-
-		<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-		<!--[if lt IE 9]>
-		  <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-		  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-		<![endif]-->
-
-    </head>
-	<body onload="SetDefault();">
-				<!-- jQuery Plugins -->
-		
-			
-		<?php 
-			include 'mode.php';
-		 ?>
-		<!-- HEADER -->
-			<!-- TOP HEADER -->
-			<!-- /TOP HEADER -->
-
-			<!-- MAIN HEADER -->
-			<!-- /MAIN HEADER -->
-			
-		<?php include_once 'subpage/header.php'; ?>
-		<!-- /HEADER -->
-
-		<!-- NAVIGATION -->
-		<?php include_once 'subpage/navigation.html'; ?>
-		<!-- /NAVIGATION -->
-
-		<!-- SECTION -->
-		<?php include_once 'subpage/section_introduce.html'; ?>
-		<!-- /SECTION -->
-
-		<!-- SECTION -->
-		<?php include_once 'subpage/section_newproduct.php'; ?>
-		<!-- /SECTION -->
-
-		<!-- HOT DEAL SECTION -->
-		<?php include_once 'subpage/hotdealsection.html'; ?>
-		<!-- /HOT DEAL SECTION -->
-
-		<!-- SECTION -->
-		<?php include_once 'subpage/section_topselling.php'; ?>
-		<!-- /SECTION -->
-
-		<!-- SECTION -->
-		<?php include_once 'subpage/section_topselling_widget.php'; ?>
-		<!-- /SECTION -->
-
-		<!-- NEWSLETTER -->
-		<?php include_once 'subpage/newsletter.php'; ?>
-		<!-- /NEWSLETTER -->
-
-		<!-- FOOTER -->
-		<?php include_once 'subpage/footer.html'; ?>
-		<!-- /FOOTER -->
-		<script src="js/jquery.min.js"></script>
-		<script src="js/bootstrap.min.js"></script>
-		<script src="js/slick.min.js"></script>
-		<script src="js/nouislider.min.js"></script>
-		<script src="js/jquery.zoom.min.js"></script>
-		<script src="js/main.js"></script>
-		<script>
-			function flyToElement(flyer, flyingTo) {
-			    var $func = $(this);
-			        
-			    // Nhân bản đối tượng(hình ảnh) sẽ bay vào giỏ hàng
-			    var flyerClone = $(flyer).clone();
-			    
-			    // Thiết lập đối tượng nhân bản này trùng với đối tượng thực tế 
-			    $(flyerClone).css({
-			        position: 'absolute',
-			        top: $(flyer).offset().top + 35 + "px",
-			        left: $(flyer).offset().left + 35 + "px",
-			        opacity: 1,
-			        'z-index': 99999,
-			        width:'150px',
-			        height:'150px'
-			    }).appendTo($('body'));
-
-			    // Lấy về tọa độ của giỏ hàng
-			    var gotoX = $(flyingTo).offset().left;
-			    var gotoY = $(flyingTo).offset().top;
-
-			    // Hiệu ứng bay vào giỏ hàng
-			    $(flyerClone).animate({
-			        opacity: 0.4,
-			        left: gotoX,
-			        top: gotoY,
-			        width: $(flyingTo).width(),
-			        height: $(flyingTo).height()
-			    }, 700,
-			    function () {
-			         $(flyerClone).fadeOut('slow', function () {
-			              	 $(flyerClone).remove();
-			          });             
-			    });
-			}        
-
-			$('.add-to-cart-btn').click(function(){
-			    var $_this = $(this);
-			    var itemImg = $(this).closest('.product').find('img').eq(0);
-			    flyToElement($(itemImg), $('#shopping-cart'));
-			});
-		</script>
-		<!-- <script src="js/jquery-3.4.1.min.js"></script> -->
-	</body>
+    <script>
+        function openModal(accountId) {
+            document.getElementById('account_id').value = accountId;
+            document.getElementById('buyModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('buyModal').style.display = 'none';
+        }
+        
+        // Đóng modal khi click ra ngoài
+        window.onclick = function(event) {
+            var modal = document.getElementById('buyModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
 </html>
