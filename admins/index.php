@@ -1,190 +1,137 @@
-<?php 
-     if(!isset($_SESSION)) session_start();
-    //  $name = isset($_COOKIE['name'])?$_COOKIE['name']:header("location:login.php");
-     if(isset($_SESSION['admin'])) $info = $_SESSION['admin'];
-     else{
-        echo "<script>location.href = 'login.php'</script>"; exit;
-     }
-?>
-<!doctype html>
-<html class="no-js" lang="en">
+<?php
+session_start();
+include "../config/config.php";
+include "../include/function.php";
+spl_autoload_register("loadClass");
 
+// Kiểm tra đăng nhập và quyền admin
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    header("Location: login.php");
+    exit();
+}
+
+// Lấy thống kê
+$stmt = $pdo->query("SELECT COUNT(*) as total_accounts FROM accounts");
+$total_accounts = $stmt->fetch()['total_accounts'];
+
+$stmt = $pdo->query("SELECT COUNT(*) as sold_accounts FROM accounts WHERE status = 'sold'");
+$sold_accounts = $stmt->fetch()['sold_accounts'];
+
+$stmt = $pdo->query("SELECT COUNT(*) as total_orders FROM orders");
+$total_orders = $stmt->fetch()['total_orders'];
+
+$stmt = $pdo->query("SELECT COUNT(*) as total_users FROM users");
+$total_users = $stmt->fetch()['total_users'];
+?>
+
+<!DOCTYPE html>
+<html lang="vi">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Administrator</title>
-    <meta name="description" content="Sufee Admin - HTML5 Admin Template">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <link rel="apple-touch-icon" href="apple-icon.png">
-    <link rel="shortcut icon" href="../img/favicon.png">
-
-    <link rel="stylesheet" href="vendors/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="vendors/font-awesome/css/font-awesome.min.css">
-
-    <link rel="stylesheet" href="assets/css/style.css">
-
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
-    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Shop Nick Liên Quân</title>
+    <link type="text/css" rel="stylesheet" href="../css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="../css/font-awesome.min.css">
+    <style>
+        .sidebar {
+            background: #2c3e50;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            width: 250px;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            color: #7f8c8d;
+        }
+        .nav-link {
+            color: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid #34495e;
+        }
+        .nav-link:hover {
+            background: #34495e;
+            color: white;
+        }
+        .nav-link.active {
+            background: #e74c3c;
+        }
+    </style>
 </head>
-
 <body>
-<?php 
-        include "../config/config.php";
-        include ROOT."/include/function.php";
-        spl_autoload_register("loadClass");
-?>
-
-    <!-- Left Panel -->
-
-    <aside id="left-panel" class="left-panel">
-        <nav class="navbar navbar-expand-sm navbar-default">
-
-            <div class="navbar-header">
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#main-menu" aria-controls="main-menu" aria-expanded="false" aria-label="Toggle navigation">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <a class="navbar-brand" href="./"><img src="../img/logo.png" alt="Logo"></a>
-                <a class="navbar-brand hidden" href="./"><img src="images/logo2.png" alt="Logo"></a>
-            </div>
-
-            <div id="main-menu" class="main-menu collapse navbar-collapse">
-                <ul class="nav navbar-nav">
-                    <li class="active">
-                        <a href="./"> <i class="menu-icon fa fa-dashboard"></i>Dashboard </a>
-                    </li>
-                    <h3 class="menu-title">UI elements</h3><!-- /.menu-title -->
-                    <li class="menu-item-has-children dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="menu-icon fa fa-laptop"></i>Quản lý</a>
-                        <ul class="sub-menu children dropdown-menu">
-                            <li><i class="fa fa-puzzle-piece"></i><a href="index.php?mode=provider">Provider</a></li>
-                            <li><i class="fa fa-id-badge"></i><a href="index.php?mode=category">Category</a></li>
-                            <li><i class="fa fa-bars"></i><a href="index.php?mode=user">User</a></li>
-                            <li><i class="fa fa-share-square-o"></i><a href="index.php?mode=order">Order</a></li>
-                            <li><i class="fa fa-id-card-o"></i><a href="index.php?mode=product">Product</a></li>
-                        </ul>
-                    </li>
-                    <li class="menu-item-has-children dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="menu-icon fa fa-table"></i>Thống kê</a>
-                        <ul class="sub-menu children dropdown-menu">
-                            <li><i class="fa fa-table"></i><a href="index.php?mode=order&ac=revenue">Doanh Thu</a></li>
-                            <li><i class="fa fa-table"></i><a href="index.php?mode=product&ac=sold">Sản phẩm đã bán</a></li>
-                        </ul>
-                    </li>
-
-                    
-                </ul>
-            </div><!-- /.navbar-collapse -->
+    <div class="sidebar">
+        <div class="p-3 text-center bg-dark">
+            <h4>🛡️ ADMIN PANEL</h4>
+            <small>Shop Nick Liên Quân</small>
+        </div>
+        <nav class="nav flex-column">
+            <a class="nav-link active" href="index.php">📊 Dashboard</a>
+            <a class="nav-link" href="accounts.php">🎮 Quản lý tài khoản</a>
+            <a class="nav-link" href="orders.php">📦 Quản lý đơn hàng</a>
+            <a class="nav-link" href="users.php">👥 Quản lý users</a>
+            <a class="nav-link" href="../index.php">🏠 Về trang chủ</a>
+            <a class="nav-link" href="logout.php">🚪 Đăng xuất</a>
         </nav>
-    </aside><!-- /#left-panel -->
+    </div>
 
-    <!-- Left Panel -->
-
-    <!-- Right Panel -->
-
-    <div id="right-panel" class="right-panel">
-
-        <!-- Header-->
-        <header id="header" class="header">
-
-            <div class="header-menu">
-
-                <div class="col-sm-7">
-                    <a id="menuToggle" class="menutoggle pull-left"><i class="fa fa fa-tasks"></i></a>
-                    <div class="header-left">
-                        <button class="search-trigger"><i class="fa fa-search"></i></button>                        
-                    </div>
-                </div>
-
-                <div class="col-sm-5">
-                    <div class="user-area dropdown float-right">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <img class="user-avatar rounded-circle" src="images/admin.jpg" alt="User Avatar">
-                        </a>
-
-                        <div class="user-menu dropdown-menu">
-                            <a class="nav-link" href="#"><i class="fa fa-user"></i>Hi, <?php echo $info['ad_user'];?></a>
-                            <a class="nav-link" href="index.php?mode=exit"><i class="fa fa-power-off"></i> Logout</a>
-                        </div>
-                    </div>
-
-                    <div class="language-select dropdown" id="language-select">
-                        <a class="dropdown-toggle" href="#" data-toggle="dropdown"  id="language" aria-haspopup="true" aria-expanded="true">
-                            <i class="flag-icon flag-icon-vn"></i>
-                        </a>
-                    </div>
-
-                </div>
-            </div>
-
-        </header><!-- /header -->
-        <!-- Header-->
-
-        <!-- Search Bar -->
-        <div class="breadcrumbs" id='search-bar'>            
-            <?php include 'layout/search.php'; ?>
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Xin chào, <?php echo $_SESSION['user_name']; ?>! 👋</h2>
+            <span class="badge bg-danger">ADMIN</span>
         </div>
-        
-        <!-- Search Bar -->
-        <div class="breadcrumbs">
-            <div class="col-sm-4">
-                <div class="page-header float-left">
-                    <div class="page-title">
-                        <h1>Dashboard</h1>
-                    </div>
+
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number"><?php echo $total_accounts; ?></div>
+                    <div class="stat-label">Tổng tài khoản</div>
                 </div>
             </div>
-            <div class="col-sm-8">
-                <div class="page-header float-right">
-                    <div class="page-title">
-                        <ol class="breadcrumb text-right">
-                            <li class="active">Dashboard</li>
-                        </ol>
-                    </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number"><?php echo $sold_accounts; ?></div>
+                    <div class="stat-label">Đã bán</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number"><?php echo $total_orders; ?></div>
+                    <div class="stat-label">Tổng đơn hàng</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number"><?php echo $total_users; ?></div>
+                    <div class="stat-label">Thành viên</div>
                 </div>
             </div>
         </div>
 
-
-        <div class="container"> 
-            <div class="row"> 
-            <?php
-                if(isset($_GET['rs'])){
-                    $result = getIndex('rs');
-                    $action = getIndex('ac');
-                    if($result == 'Thêm thành công' || $result == 'Xoá thành công' || $result == 'Sửa thành công'){
-                        echo '<div class="col-sm-12">
-                            <div class="alert  alert-success alert-dismissible fade show" role="alert">
-                                <span class="badge badge-pill badge-success">Success</span>'.$result.'
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        </div>';
-                    } 
-                    else{
-                        echo '<div class="col-sm-12">
-                                <div class="alert  alert-danger alert-dismissible fade show" role="alert">
-                                    <span class="badge badge-pill badge-danger">Failed</span> '.$result.'
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            </div>';
-                    } 
-                }     
-                include 'mode.php';
-            ?>     
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="stat-card">
+                    <h4>📈 Thống kê nhanh</h4>
+                    <p>Chào mừng đến với trang quản trị Shop Nick Liên Quân Mobile!</p>
+                    <p>Bạn có thể quản lý tất cả tài khoản, đơn hàng và người dùng từ đây.</p>
+                </div>
             </div>
         </div>
-    </div>  
-    <!-- Right Panel -->
-
-    <script src="vendors/jquery/dist/jquery.min.js"></script>
-    <script src="vendors/popper.js/dist/umd/popper.min.js"></script>
-    <script src="vendors/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script src="assets/js/main.js"></script>
-
+    </div>
 </body>
-
 </html>
