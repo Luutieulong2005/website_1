@@ -1,9 +1,8 @@
 <?php
 session_start();
-include "config/config.php";
-include ROOT."/include/function.php";
-spl_autoload_register("loadClass");
-
+// Sửa đường dẫn include
+include "../config/config.php";
+include "../include/function.php";
 $error = '';
 $success = '';
 
