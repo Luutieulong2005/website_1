@@ -1,6 +1,35 @@
 <?php
 if(!isset($_SESSION)) session_start();
 
+// Xử lý đăng ký user - THÊM ĐOẠN NÀY
+if (isset($_POST['register_user'])) {
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $phone = $_POST['phone'];
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
+    
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    
+    if ($stmt->rowCount() > 0) {
+        $_SESSION['error'] = "Email đã tồn tại!";
+    } elseif ($password !== $confirm_password) {
+        $_SESSION['error'] = "Mật khẩu xác nhận không khớp!";
+    } else {
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("INSERT INTO users (name, email, phone, password, role) VALUES (?, ?, ?, ?, 'user')");
+        
+        if ($stmt->execute([$name, $email, $phone, $hashed_password])) {
+            $_SESSION['success'] = "Đăng ký thành công! Vui lòng đăng nhập.";
+        } else {
+            $_SESSION['error'] = "Đăng ký thất bại!";
+        }
+    }
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
 // Kiểm tra user đã đăng nhập
 $user_name = '';
 if (isset($_SESSION['user_id'])) {
