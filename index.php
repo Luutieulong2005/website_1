@@ -227,27 +227,28 @@
 
     </head>
 	<body onload="SetDefault();">
-		<!-- HEADER TOP -->
-		<div class="header-top">
-			<div class="container">
-				<div class="contact-info">
-					<div class="contact-details">
-						<div><strong>HTP</strong></div>
-						<div>0878-216-018</div>
-						<div>tieulong.work@gmail.com</div>
-						<div>53 Võ Văn Ngân, TP Thủ Đức</div>
-					</div>
-					<div class="user-actions">
-						<div class="user-action-item">Tất cả</div>
-						<div class="user-action-item">Search</div>
-						<div class="user-action-item">Kiểm tra đơn hàng</div>
-						<div class="user-action-item">Đăng nhập/Đăng ký</div>
-						<div class="user-action-item">DS yêu thích</div>
-						<div class="user-action-item">Giỏ hàng</div>
-					</div>
-				</div>
-			</div>
-		</div>
+<!-- HEADER TOP -->
+<div class="header-top">
+    <div class="container">
+        <div class="contact-info">
+            <div class="contact-details">
+                <div><strong>HTP</strong></div>
+                <div>0878-216-018</div>
+                <div>tieulong.work@gmail.com</div>
+                <div>53 Võ Văn Ngân, TP Thủ Đức</div>
+            </div>
+            <div class="user-actions">
+                <div class="user-action-item">Tất cả</div>
+                <div class="user-action-item">Tìm kiếm</div>
+                <div class="user-action-item">Kiểm tra đơn hàng</div>
+                <div class="user-action-item">Đăng nhập/Đăng ký</div>
+                <div class="user-action-item">DS yêu thích</div>
+                <div class="user-action-item">Giỏ hàng</div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /HEADER TOP -->
 		<!-- /HEADER TOP -->
 
 		<!-- NAVIGATION -->
