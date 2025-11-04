@@ -304,6 +304,22 @@ if (isset($_POST['buy_account'])) {
             border-radius: 10px;
             object-fit: contain;
         }
+        .image-placeholder {
+            background: #f8f9fa;
+            height: 180px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            border: 2px dashed #ddd;
+        }
+        .image-placeholder i {
+            font-size: 3em;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
         .rank-badge {
             position: absolute;
             top: 10px;
@@ -411,6 +427,26 @@ if (isset($_POST['buy_account'])) {
             color: white; 
             padding: 40px 0; 
             margin-top: 50px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .contact-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            .contact-details {
+                justify-content: center;
+            }
+            .user-actions {
+                justify-content: center;
+            }
+            .hero-banner {
+                padding: 50px 0;
+            }
+            .hero-banner h1 {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
@@ -594,9 +630,15 @@ if (isset($_POST['buy_account'])) {
                     <div class="col-md-4 col-lg-3">
                         <div class="account-card">
                             <div class="account-image">
-                                <img src="images/<?php echo htmlspecialchars($acc['image'] ?? 'default-account.jpg'); ?>" 
-                                     alt="<?php echo htmlspecialchars($acc['username']); ?>"
-                                     onerror="this.src='https://via.placeholder.com/300x200?text=Liên+Quân'">
+                                <?php if (!empty($acc['image']) && file_exists('images/' . $acc['image'])): ?>
+                                    <img src="images/<?php echo htmlspecialchars($acc['image']); ?>" 
+                                         alt="<?php echo htmlspecialchars($acc['username']); ?>">
+                                <?php else: ?>
+                                    <div class="image-placeholder">
+                                        <i class="fas fa-gamepad"></i>
+                                        <span>Liên Quân</span>
+                                    </div>
+                                <?php endif; ?>
                                 <div class="rank-badge"><?php echo htmlspecialchars($acc['rank']); ?></div>
                             </div>
                             
