@@ -28,7 +28,7 @@ if (isset($_POST['register_user'])) {
                 $_SESSION['error'] = "Email đã tồn tại!";
             } else {
                 $user_id = 'user_' . time() . rand(100, 999);
-                $hashed_pwd = md5($password);
+                $hashed_pwd = md5($password); // Dùng MD5
                 
                 // Thêm vào bảng user
                 $stmt = $db->prepare("INSERT INTO `user` (user_id, user_name, user_pwd, user_email, user_phone) VALUES (?, ?, ?, ?, ?)");
@@ -47,6 +47,45 @@ if (isset($_POST['register_user'])) {
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
+
+// === XỬ LÝ ĐĂNG NHẬP USER ===
+if (isset($_POST['login_user'])) {
+    $email = trim($_POST['email']);
+    $password = trim($_POST['password']);
+    
+    if (empty($email) || empty($password)) {
+        $_SESSION['error'] = "Vui lòng điền đầy đủ thông tin!";
+    } else {
+        try {
+            $db = $config->getConnection();
+            $hashed_pwd = md5($password); // Dùng MD5
+            
+            // Kiểm tra trong bảng user
+            $stmt = $db->prepare("SELECT user_id, user_name, user_email FROM `user` WHERE user_email = ? AND user_pwd = ?");
+            $stmt->execute([$email, $hashed_pwd]);
+            $user = $stmt->fetch();
+            
+            if ($user) {
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['user_name'] = $user['user_name'];
+                $_SESSION['user_email'] = $user['user_email'];
+                $_SESSION['user_role'] = 'user';
+                
+                $_SESSION['success'] = "Đăng nhập thành công! Chào mừng " . $user['user_name'] . "!";
+            } else {
+                $_SESSION['error'] = "Email hoặc mật khẩu không đúng!";
+            }
+        } catch (Exception $e) {
+            $_SESSION['error'] = "Lỗi hệ thống! Vui lòng thử lại.";
+            error_log("Login error: " . $e->getMessage());
+        }
+    }
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
+// ... (phần còn lại của code)
+?>
 
 // === XỬ LÝ ĐĂNG NHẬP USER ===
 if (isset($_POST['login_user'])) {
