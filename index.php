@@ -19,14 +19,20 @@ if (isset($_POST['register_user'])) {
     } else {
         try {
             $db = $config->getConnection();
-            $stmt = $db->prepare("SELECT user_id FROM `user` WHERE user_email = ?");
-            $stmt->execute([$email]);
+            
+            // Kiểm tra email tồn tại trong cả 2 bảng user và users
+            $stmt = $db->prepare("SELECT user_id FROM `user` WHERE user_email = ? 
+                                 UNION 
+                                 SELECT id as user_id FROM `users` WHERE email = ?");
+            $stmt->execute([$email, $email]);
             
             if ($stmt->rowCount() > 0) {
                 $_SESSION['error'] = "Email đã tồn tại!";
             } else {
                 $user_id = 'user_' . time() . rand(100, 999);
-                $hashed_pwd = md5($password);
+                $hashed_pwd = md5($password); // Dùng MD5 để tương thích với database cũ
+                
+                // Thêm vào bảng user (database cũ)
                 $stmt = $db->prepare("INSERT INTO `user` (user_id, user_name, user_pwd, user_email, user_phone) VALUES (?, ?, ?, ?, ?)");
                 
                 if ($stmt->execute([$user_id, $name, $hashed_pwd, $email, $phone])) {
@@ -43,99 +49,135 @@ if (isset($_POST['register_user'])) {
     exit();
 }
 
+// === XỬ LÝ ĐĂNG NHẬP ===
+if (isset($_POST['login_user'])) {
+    $email = trim($_POST['email']);
+    $password = trim($_POST['password']);
+    
+    if (empty($email) || empty($password)) {
+        $_SESSION['error'] = "Vui lòng điền đầy đủ thông tin!";
+    } else {
+        try {
+            $db = $config->getConnection();
+            $hashed_pwd = md5($password);
+            
+            // Kiểm tra trong cả 2 bảng user và users
+            $stmt = $db->prepare("SELECT user_id as id, user_name as name, user_email as email, 'user' as role 
+                                 FROM `user` WHERE user_email = ? AND user_pwd = ?
+                                 UNION 
+                                 SELECT id, name, email, role FROM `users` WHERE email = ? AND password = ?");
+            $stmt->execute([$email, $hashed_pwd, $email, $hashed_pwd]);
+            $user = $stmt->fetch();
+            
+            if ($user) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['user_role'] = $user['role'];
+                
+                $_SESSION['success'] = "Đăng nhập thành công!";
+            } else {
+                $_SESSION['error'] = "Email hoặc mật khẩu không đúng!";
+            }
+        } catch (Exception $e) {
+            $_SESSION['error'] = "Lỗi hệ thống! Vui lòng thử lại.";
+        }
+    }
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
 // === LẤY THÔNG TIN USER ĐÃ ĐĂNG NHẬP ===
 $user_name = '';
+$user_role = '';
 if (isset($_SESSION['user_id'])) {
-    try {
-        $db = $config->getConnection();
-        $stmt = $db->prepare("SELECT user_name FROM `user` WHERE user_id = ?");
-        $stmt->execute([$_SESSION['user_id']]);
-        $user = $stmt->fetch();
-        $user_name = $user['user_name'] ?? 'Khách';
-    } catch (Exception $e) {
-        error_log("User info error: " . $e->getMessage());
-    }
+    $user_name = $_SESSION['user_name'] ?? 'Khách';
+    $user_role = $_SESSION['user_role'] ?? 'user';
 }
 
 // === TÌM KIẾM & LỌC TÀI KHOẢN LIÊN QUÂN ===
 $search = $_GET['search'] ?? '';
-$cat_filter = $_GET['cat'] ?? '';
+$category_filter = $_GET['category'] ?? '';
 $rank_filter = $_GET['rank'] ?? '';
 $price_filter = $_GET['price'] ?? '';
 
 try {
     $db = $config->getConnection();
     
-    $sql = "SELECT p.*, c.cat_name FROM product p 
-            JOIN category c ON p.cat_id = c.cat_id 
-            WHERE p.product_quantity > 0";
+    // Lấy danh sách tài khoản từ bảng accounts
+    $sql = "SELECT a.*, c.cat_name 
+            FROM accounts a 
+            LEFT JOIN category c ON a.rank LIKE CONCAT('%', c.cat_name, '%')
+            WHERE a.status = 'available'";
     $params = [];
 
     if (!empty($search)) {
-        $sql .= " AND (p.product_name LIKE ? OR p.product_description LIKE ?)";
+        $sql .= " AND (a.username LIKE ? OR a.description LIKE ? OR a.rank LIKE ?)";
+        $params[] = "%$search%";
         $params[] = "%$search%";
         $params[] = "%$search%";
     }
-    if (!empty($cat_filter)) {
-        $sql .= " AND p.cat_id = ?";
-        $params[] = $cat_filter;
+    if (!empty($category_filter)) {
+        $sql .= " AND c.cat_id = ?";
+        $params[] = $category_filter;
     }
     if (!empty($rank_filter)) {
-        $sql .= " AND p.product_rank = ?";
-        $params[] = $rank_filter;
+        $sql .= " AND a.rank LIKE ?";
+        $params[] = "%$rank_filter%";
     }
     if (!empty($price_filter)) {
         switch ($price_filter) {
-            case 'under500k': $sql .= " AND p.product_price <= 500000"; break;
-            case '500k-1m': $sql .= " AND p.product_price BETWEEN 500000 AND 1000000"; break;
-            case '1m-2m': $sql .= " AND p.product_price BETWEEN 1000000 AND 2000000"; break;
-            case 'over2m': $sql .= " AND p.product_price > 2000000"; break;
+            case 'under500k': $sql .= " AND a.price <= 500000"; break;
+            case '500k-1m': $sql .= " AND a.price BETWEEN 500000 AND 1000000"; break;
+            case '1m-2m': $sql .= " AND a.price BETWEEN 1000000 AND 2000000"; break;
+            case 'over2m': $sql .= " AND a.price > 2000000"; break;
         }
     }
-    $sql .= " ORDER BY p.product_price ASC";
+    $sql .= " ORDER BY a.price ASC";
 
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
-    $products = $stmt->fetchAll();
+    $accounts = $stmt->fetchAll();
     
 } catch (Exception $e) {
-    error_log("Product query error: " . $e->getMessage());
-    $products = [];
+    error_log("Accounts query error: " . $e->getMessage());
+    $accounts = [];
 }
 
 // === XỬ LÝ MUA TÀI KHOẢN ===
-if (isset($_POST['buy_product'])) {
+if (isset($_POST['buy_account'])) {
     if (!isset($_SESSION['user_id'])) {
         $_SESSION['error'] = "Vui lòng đăng nhập để mua tài khoản!";
-        header("Location: login.php");
+        header("Location: " . $_SERVER['PHP_SELF'] . "#login");
         exit();
     }
 
-    $product_id = $_POST['product_id'];
-    $quantity = 1;
+    $account_id = $_POST['account_id'];
 
     try {
         $db = $config->getConnection();
         
         // Kiểm tra tài khoản còn hàng
-        $stmt = $db->prepare("SELECT * FROM product WHERE product_id = ? AND product_quantity >= ?");
-        $stmt->execute([$product_id, $quantity]);
-        $product = $stmt->fetch();
+        $stmt = $db->prepare("SELECT * FROM accounts WHERE id = ? AND status = 'available'");
+        $stmt->execute([$account_id]);
+        $account = $stmt->fetch();
 
-        if ($product) {
-            // Tạo đơn hàng
-            $order_date = date('Y-m-d H:i:s');
-            $stmt = $db->prepare("INSERT INTO `order` (order_date, consignee_name, consignee_phone, consignee_address, order_status, user_id) VALUES (?, ?, ?, ?, 'pending', ?)");
-            $stmt->execute([$order_date, $_SESSION['user_name'], '', '', $_SESSION['user_id']]);
-            $order_id = $db->lastInsertId();
+        if ($account) {
+            // Tạo đơn hàng trong bảng orders
+            $stmt = $db->prepare("INSERT INTO orders (account_id, customer_name, customer_email, customer_phone, total_amount, status) 
+                                 VALUES (?, ?, ?, ?, ?, 'pending')");
+            
+            $stmt->execute([
+                $account_id,
+                $_SESSION['user_name'],
+                $_SESSION['user_email'],
+                '', // Có thể thêm trường phone trong form
+                $account['price']
+            ]);
 
-            // Thêm chi tiết đơn hàng
-            $stmt = $db->prepare("INSERT INTO order_detail (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$order_id, $product_id, $quantity, $product['product_price']]);
-
-            // Cập nhật số lượng
-            $db->prepare("UPDATE product SET product_quantity = product_quantity - ? WHERE product_id = ?")
-               ->execute([$quantity, $product_id]);
+            // Cập nhật trạng thái tài khoản thành đã bán
+            $db->prepare("UPDATE accounts SET status = 'sold' WHERE id = ?")
+               ->execute([$account_id]);
 
             $_SESSION['success'] = "Đặt mua tài khoản thành công! Chúng tôi sẽ liên hệ giao account trong 5 phút.";
         } else {
@@ -143,6 +185,7 @@ if (isset($_POST['buy_product'])) {
         }
     } catch (Exception $e) {
         $_SESSION['error'] = "Lỗi hệ thống! Vui lòng thử lại.";
+        error_log("Buy account error: " . $e->getMessage());
     }
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
@@ -156,9 +199,7 @@ if (isset($_POST['buy_product'])) {
     <title>HTP SHOP - Nick Liên Quân Uy Tín</title>
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
-    <link type="text/css" rel="stylesheet" href="css/slick.css"/>
     <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link type="text/css" rel="stylesheet" href="css/style.css"/>
     <style>
         :root {
             --primary: #2c3e50;
@@ -167,7 +208,7 @@ if (isset($_POST['buy_product'])) {
             --success: #27ae60;
         }
         
-        .product-card {
+        .account-card {
             background: white;
             border-radius: 15px;
             padding: 20px;
@@ -179,18 +220,18 @@ if (isset($_POST['buy_product'])) {
             flex-direction: column;
             border: 2px solid transparent;
         }
-        .product-card:hover {
+        .account-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 12px 25px rgba(0,0,0,0.15);
             border-color: var(--accent);
         }
-        .product-image {
+        .account-image {
             text-align: center;
             margin-bottom: 15px;
             flex-grow: 1;
             position: relative;
         }
-        .product-image img {
+        .account-image img {
             max-height: 180px;
             width: auto;
             border-radius: 10px;
@@ -208,7 +249,7 @@ if (isset($_POST['buy_product'])) {
             font-weight: bold;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .product-name {
+        .account-name {
             font-weight: bold;
             font-size: 1.1em;
             color: var(--primary);
@@ -244,12 +285,6 @@ if (isset($_POST['buy_product'])) {
             color: var(--secondary);
             text-align: center;
             margin: 15px 0;
-        }
-        .original-price {
-            text-decoration: line-through;
-            color: #999;
-            font-size: 0.9em;
-            margin-left: 10px;
         }
         .buy-btn {
             width: 100%;
@@ -347,8 +382,19 @@ if (isset($_POST['buy_product'])) {
                 <div class="user-action-item"><a href="index.php"><i class="fas fa-home"></i> Trang chủ</a></div>
                 <div class="user-action-item"><a href="#search"><i class="fas fa-search"></i> Tìm kiếm</a></div>
                 <?php if (!empty($user_name)): ?>
-                    <div class="user-action-item"><a href="profile.php"><i class="fas fa-user"></i> <strong><?php echo htmlspecialchars($user_name); ?></strong></a></div>
+                    <div class="user-action-item">
+                        <a href="profile.php">
+                            <i class="fas fa-user"></i> 
+                            <strong><?php echo htmlspecialchars($user_name); ?></strong>
+                            <?php if($user_role === 'admin'): ?>
+                                <span style="background: #e74c3c; padding: 2px 6px; border-radius: 10px; font-size: 0.7em; margin-left: 5px;">ADMIN</span>
+                            <?php endif; ?>
+                        </a>
+                    </div>
                     <div class="user-action-item"><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></div>
+                    <?php if($user_role === 'admin'): ?>
+                        <div class="user-action-item"><a href="admin/"><i class="fas fa-cog"></i> Admin</a></div>
+                    <?php endif; ?>
                 <?php else: ?>
                     <div class="user-action-item"><a href="#" data-toggle="modal" data-target="#loginModal"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a></div>
                     <div class="user-action-item"><a href="#" data-toggle="modal" data-target="#registerModal"><i class="fas fa-user-plus"></i> Đăng ký</a></div>
@@ -365,7 +411,7 @@ if (isset($_POST['buy_product'])) {
     <div class="container">
         <h1 style="font-size: 3em; margin-bottom: 20px;"><i class="fas fa-crown"></i> HTP SHOP LIÊN QUÂN</h1>
         <p style="font-size: 1.3em; margin-bottom: 30px;">Uy tín - Chất lượng - Giá tốt nhất thị trường</p>
-        <a href="#products" style="background: var(--secondary); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; transition: transform 0.3s;">
+        <a href="#accounts" style="background: var(--secondary); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; transition: transform 0.3s;">
             MUA NICK NGAY <i class="fas fa-arrow-right"></i>
         </a>
     </div>
@@ -420,17 +466,17 @@ if (isset($_POST['buy_product'])) {
         <form method="GET">
             <div class="row">
                 <div class="col-md-3">
-                    <input type="text" name="search" class="form-control" placeholder="Tìm theo tên, skin, rank..." value="<?php echo htmlspecialchars($search); ?>">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm theo tên, rank, mô tả..." value="<?php echo htmlspecialchars($search); ?>">
                 </div>
                 <div class="col-md-2">
-                    <select name="cat" class="form-control">
+                    <select name="category" class="form-control">
                         <option value="">Loại acc</option>
                         <?php
                         try {
                             $db = $config->getConnection();
                             $cats = $db->query("SELECT * FROM category")->fetchAll();
                             foreach ($cats as $cat): ?>
-                                <option value="<?php echo $cat['cat_id']; ?>" <?php echo $cat_filter == $cat['cat_id'] ? 'selected' : ''; ?>>
+                                <option value="<?php echo $cat['cat_id']; ?>" <?php echo $category_filter == $cat['cat_id'] ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($cat['cat_name']); ?>
                                 </option>
                             <?php endforeach;
@@ -442,13 +488,11 @@ if (isset($_POST['buy_product'])) {
                 <div class="col-md-2">
                     <select name="rank" class="form-control">
                         <option value="">Tất cả rank</option>
-                        <option value="Đồng" <?php echo $rank_filter == 'Đồng' ? 'selected' : ''; ?>>Đồng</option>
-                        <option value="Bạc" <?php echo $rank_filter == 'Bạc' ? 'selected' : ''; ?>>Bạc</option>
-                        <option value="Vàng" <?php echo $rank_filter == 'Vàng' ? 'selected' : ''; ?>>Vàng</option>
-                        <option value="Bạch Kim" <?php echo $rank_filter == 'Bạch Kim' ? 'selected' : ''; ?>>Bạch Kim</option>
-                        <option value="Kim Cương" <?php echo $rank_filter == 'Kim Cương' ? 'selected' : ''; ?>>Kim Cương</option>
                         <option value="Cao Thủ" <?php echo $rank_filter == 'Cao Thủ' ? 'selected' : ''; ?>>Cao Thủ</option>
-                        <option value="Thách Đấu" <?php echo $rank_filter == 'Thách Đấu' ? 'selected' : ''; ?>>Thách Đấu</option>
+                        <option value="Kim Cương" <?php echo $rank_filter == 'Kim Cương' ? 'selected' : ''; ?>>Kim Cương</option>
+                        <option value="Tinh Anh" <?php echo $rank_filter == 'Tinh Anh' ? 'selected' : ''; ?>>Tinh Anh</option>
+                        <option value="Vàng" <?php echo $rank_filter == 'Vàng' ? 'selected' : ''; ?>>Vàng</option>
+                        <option value="Bạc" <?php echo $rank_filter == 'Bạc' ? 'selected' : ''; ?>>Bạc</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -469,8 +513,8 @@ if (isset($_POST['buy_product'])) {
     </div>
 </div>
 
-<!-- PRODUCTS -->
-<div class="section" id="products">
+<!-- ACCOUNTS -->
+<div class="section" id="accounts">
     <div class="container">
         <div class="section-title text-center">
             <h3><i class="fas fa-fire"></i> TÀI KHOẢN NỔI BẬT</h3>
@@ -497,39 +541,41 @@ if (isset($_POST['buy_product'])) {
         <?php endif; ?>
 
         <div class="row">
-            <?php if (empty($products)): ?>
+            <?php if (empty($accounts)): ?>
                 <div class="col-12 text-center">
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i> Không tìm thấy tài khoản nào phù hợp.
                     </div>
                 </div>
             <?php else: ?>
-                <?php foreach ($products as $p): ?>
+                <?php foreach ($accounts as $acc): ?>
                     <div class="col-md-4 col-lg-3">
-                        <div class="product-card">
-                            <div class="product-image">
-                                <img src="images/<?php echo htmlspecialchars($p['product_img']); ?>" 
-                                     alt="<?php echo htmlspecialchars($p['product_name']); ?>"
+                        <div class="account-card">
+                            <div class="account-image">
+                                <img src="images/<?php echo htmlspecialchars($acc['image'] ?? 'default-account.jpg'); ?>" 
+                                     alt="<?php echo htmlspecialchars($acc['username']); ?>"
                                      onerror="this.src='https://via.placeholder.com/300x200?text=Liên+Quân'">
-                                <div class="rank-badge"><?php echo htmlspecialchars($p['product_rank'] ?? 'Chưa rank'); ?></div>
+                                <div class="rank-badge"><?php echo htmlspecialchars($acc['rank']); ?></div>
                             </div>
-                            <div class="category"><?php echo htmlspecialchars($p['cat_name']); ?></div>
-                            <div class="product-name"><?php echo htmlspecialchars($p['product_name']); ?></div>
+                            
+                            <?php if (!empty($acc['cat_name'])): ?>
+                                <div class="category"><?php echo htmlspecialchars($acc['cat_name']); ?></div>
+                            <?php endif; ?>
+                            
+                            <div class="account-name"><?php echo htmlspecialchars($acc['username']); ?></div>
                             
                             <div class="account-info">
-                                <div><i class="fas fa-trophy"></i> <strong>Rank:</strong> <?php echo htmlspecialchars($p['product_rank'] ?? 'Chưa xác định'); ?></div>
-                                <div><i class="fas fa-user"></i> <strong>Tướng:</strong> <?php echo htmlspecialchars($p['product_hero_count'] ?? '?'); ?></div>
-                                <div><i class="fas fa-palette"></i> <strong>Skin:</strong> <?php echo htmlspecialchars($p['product_skin_count'] ?? '?'); ?></div>
+                                <div><i class="fas fa-trophy"></i> <strong>Rank:</strong> <?php echo htmlspecialchars($acc['rank']); ?></div>
+                                <div><i class="fas fa-chart-line"></i> <strong>Level:</strong> <?php echo htmlspecialchars($acc['level']); ?></div>
+                                <div><i class="fas fa-user"></i> <strong>Tướng:</strong> <?php echo htmlspecialchars($acc['hero_count']); ?></div>
+                                <div><i class="fas fa-palette"></i> <strong>Skin:</strong> <?php echo htmlspecialchars($acc['skin_count']); ?></div>
                             </div>
                             
                             <div class="price">
-                                <?php echo number_format($p['product_price']); ?> ₫
-                                <?php if (!empty($p['product_original_price']) && $p['product_original_price'] > $p['product_price']): ?>
-                                    <span class="original-price"><?php echo number_format($p['product_original_price']); ?> ₫</span>
-                                <?php endif; ?>
+                                <?php echo formatPrice($acc['price']); ?>
                             </div>
                             
-                            <button class="buy-btn" onclick="openBuyModal(<?php echo $p['product_id']; ?>)">
+                            <button class="buy-btn" onclick="openBuyModal(<?php echo $acc['id']; ?>, '<?php echo htmlspecialchars($acc['username']); ?>', '<?php echo htmlspecialchars($acc['rank']); ?>', <?php echo $acc['price']; ?>)">
                                 <i class="fas fa-shopping-cart"></i> MUA NGAY
                             </button>
                         </div>
@@ -550,17 +596,17 @@ if (isset($_POST['buy_product'])) {
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="product_id" id="buy_product_id">
-                    <p><strong>Tài khoản:</strong> <span id="buy_product_name"></span></p>
-                    <p><strong>Rank:</strong> <span id="buy_product_rank"></span></p>
-                    <p><strong>Giá:</strong> <span id="buy_product_price" class="text-danger font-weight-bold"></span></p>
+                    <input type="hidden" name="account_id" id="buy_account_id">
+                    <p><strong>Tài khoản:</strong> <span id="buy_account_name"></span></p>
+                    <p><strong>Rank:</strong> <span id="buy_account_rank"></span></p>
+                    <p><strong>Giá:</strong> <span id="buy_account_price" class="text-danger font-weight-bold"></span></p>
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i> 
                         Sau khi xác nhận, chúng tôi sẽ liên hệ giao account trong vòng 5 phút.
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" name="buy_product" class="btn btn-success btn-lg">
+                    <button type="submit" name="buy_account" class="btn btn-success btn-lg">
                         <i class="fas fa-check"></i> XÁC NHẬN MUA
                     </button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
@@ -606,6 +652,36 @@ if (isset($_POST['buy_product'])) {
     </div>
 </div>
 
+<!-- MODAL ĐĂNG NHẬP -->
+<div class="modal fade" id="loginModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                <div class="modal-header">
+                    <h4><i class="fas fa-sign-in-alt"></i> Đăng nhập</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="email" name="email" class="form-control" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" name="password" class="form-control" placeholder="Mật khẩu" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="login_user" class="btn btn-primary btn-block">
+                        <i class="fas fa-sign-in-alt"></i> ĐĂNG NHẬP
+                    </button>
+                    <div class="text-center mt-2">
+                        <small>Chưa có tài khoản? <a href="#" data-dismiss="modal" data-toggle="modal" data-target="#registerModal">Đăng ký ngay</a></small>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- FOOTER -->
 <footer style="background: var(--primary); color: white; padding: 40px 0; margin-top: 50px;">
     <div class="container">
@@ -639,20 +715,11 @@ if (isset($_POST['buy_product'])) {
 <script src="js/jquery.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
 <script>
-function openBuyModal(id) {
-    // Trong thực tế, bạn sẽ gọi API để lấy thông tin sản phẩm
-    // Ở đây tôi giả lập dữ liệu
-    const product = {
-        id: id,
-        name: document.querySelector(`[onclick="openBuyModal(${id})"]`).closest('.product-card').querySelector('.product-name').textContent,
-        rank: document.querySelector(`[onclick="openBuyModal(${id})"]`).closest('.product-card').querySelector('.rank-badge').textContent,
-        price: document.querySelector(`[onclick="openBuyModal(${id})"]`).closest('.product-card').querySelector('.price').textContent.trim()
-    };
-    
-    $('#buy_product_id').val(product.id);
-    $('#buy_product_name').text(product.name);
-    $('#buy_product_rank').text(product.rank);
-    $('#buy_product_price').text(product.price);
+function openBuyModal(id, name, rank, price) {
+    $('#buy_account_id').val(id);
+    $('#buy_account_name').text(name);
+    $('#buy_account_rank').text(rank);
+    $('#buy_account_price').text(new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(price));
     $('#buyModal').modal('show');
 }
 
@@ -669,6 +736,16 @@ $(document).ready(function() {
             scrollTop: $($(this).attr('href')).offset().top - 80
         }, 500);
     });
+    
+    // Show login modal if there's login error
+    <?php if (isset($_POST['login_user']) && isset($_SESSION['error'])): ?>
+        $('#loginModal').modal('show');
+    <?php endif; ?>
+    
+    // Show register modal if there's register error
+    <?php if (isset($_POST['register_user']) && isset($_SESSION['error'])): ?>
+        $('#registerModal').modal('show');
+    <?php endif; ?>
 });
 </script>
 </body>
