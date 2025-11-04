@@ -2,25 +2,41 @@
 session_start();
 include "../config/config.php";
 
-$error = '';
+// Nếu đã đăng nhập, chuyển hướng đến dashboard
+if (isset($_SESSION['admin_id'])) {
+    header("Location: index.php");
+    exit();
+}
 
-if ($_POST['login'] ?? false) {
+// Xử lý đăng nhập
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
-
-    $stmt = $pdo->prepare("SELECT * FROM admin WHERE ad_email = ?");
-    $stmt->execute([$email]);
-    $admin = $stmt->fetch();
-
-    if ($admin && $admin['ad_pwd'] === $password) {
-        $_SESSION['admin_id'] = $admin['ad_id'];
-        $_SESSION['admin_name'] = $admin['ad_name'];
-        $_SESSION['admin_email'] = $admin['ad_email'];
-        $_SESSION['user_role'] = 'admin'; // Dùng chung session với user
-        header("Location: index.php");
-        exit();
+    
+    if (empty($email) || empty($password)) {
+        $error = "Vui lòng điền đầy đủ thông tin!";
     } else {
-        $error = "Email hoặc mật khẩu không đúng!";
+        try {
+            $db = $config->getConnection();
+            
+            // Kiểm tra trong bảng admin
+            $stmt = $db->prepare("SELECT * FROM admin WHERE ad_email = ? AND ad_pwd = ?");
+            $stmt->execute([$email, $password]);
+            $admin = $stmt->fetch();
+            
+            if ($admin) {
+                $_SESSION['admin_id'] = $admin['ad_id'];
+                $_SESSION['admin_name'] = $admin['ad_name'];
+                $_SESSION['admin_email'] = $admin['ad_email'];
+                
+                header("Location: index.php");
+                exit();
+            } else {
+                $error = "Email hoặc mật khẩu không đúng!";
+            }
+        } catch (Exception $e) {
+            $error = "Lỗi hệ thống! Vui lòng thử lại.";
+        }
     }
 }
 ?>
@@ -29,33 +45,79 @@ if ($_POST['login'] ?? false) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập Admin</title>
+    <title>Đăng nhập Admin - HTP Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <style>
-        body { background: #f4f6f9; font-family: Arial; }
-        .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .btn-login { background: #e74c3c; color: white; }
-        .btn-login:hover { background: #c0392b; }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .brand-logo {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+        .brand-logo i {
+            font-size: 3em;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
-<div class="login-box">
-    <h3 class="text-center">Admin Login</h3>
-    <?php if ($error): ?>
-        <div class="alert alert-danger"><?php echo $error; ?></div>
-    <?php endif; ?>
-    <form method="POST">
-        <div class="mb-3">
-            <label>Email</label>
-            <input type="email" name="email" class="form-control" required placeholder="phat123@asd.com">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="login-card">
+                    <div class="brand-logo">
+                        <i class="fas fa-crown"></i>
+                        <h3>HTP SHOP ADMIN</h3>
+                        <p class="text-muted">Đăng nhập hệ thống quản lý</p>
+                    </div>
+                    
+                    <?php if (isset($error)): ?>
+                        <div class="alert alert-danger"><?php echo $error; ?></div>
+                    <?php endif; ?>
+                    
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" name="email" class="form-control" placeholder="admin@lienquan.com" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mật khẩu</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" name="password" class="form-control" placeholder="Mật khẩu" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <a href="../index.php" class="text-muted">
+                            <i class="fas fa-arrow-left"></i> Quay lại trang chủ
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label>Mật khẩu</label>
-            <input type="password" name="password" class="form-control" required placeholder="123456">
-        </div>
-        <button type="submit" name="login" class="btn btn-login w-100">Đăng nhập</button>
-    </form>
-    <p class="text-center mt-3"><a href="../login.php">User Login</a></p>
-</div>
+    </div>
 </body>
 </html>
