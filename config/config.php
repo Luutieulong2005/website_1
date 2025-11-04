@@ -17,13 +17,12 @@ class Config {
     public $conn;
 
     // Site configuration
-    public $site_name = "HTP SHOP - Nick Liên Quân";
+    public $site_name = "HTP SHOP - Nick Liên Quân Uy Tín";
     public $site_url = "http://localhost/htpshop";
     public $admin_email = "tieulong.work@gmail.com";
     
     // Payment configuration
     public $currency = "VND";
-    public $vat_rate = 0.1; // 10%
     
     // File upload configuration
     public $upload_dir = "uploads/";
@@ -34,23 +33,19 @@ class Config {
         $this->conn = null;
         try {
             $this->conn = new PDO(
-                "mysql:host=$this->host;dbname=$this->dbname;charset=utf8",
+                "mysql:host=$this->host;dbname=$this->dbname;charset=utf8mb4",
                 $this->username,
                 $this->password,
                 [
                     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    // SSL: DÙNG FILE CỦA BẠN (nếu có) – KHÔNG BẮT BUỘC NẾU BẠN ĐÃ CẤU HÌNH TRÊN AZURE
-                    // PDO::MYSQL_ATTR_SSL_CA => ROOT . '/config/DigiCertGlobalRootCA.crt.pem',
-                    // PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false
                 ]
             );
 
-            // TEST NHẸ (CÓ THỂ XÓA SAU)
+            // Test connection
             $this->conn->query("SELECT 1");
 
         } catch (PDOException $e) {
-            // GHI LOG + ẨN LỖI
             error_log("DB Error: " . $e->getMessage());
             throw new Exception("Hệ thống đang bảo trì. Vui lòng thử lại sau.");
         }
@@ -64,8 +59,7 @@ class Config {
     public function getStatusBadge($status) {
         $badges = [
             'available' => '<span style="background: #2ecc71; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">Còn hàng</span>',
-            'sold' => '<span style="background: #e74c3c; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">Đã bán</span>',
-            'hidden' => '<span style="background: #95a5a6; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">Ẩn</span>'
+            'sold' => '<span style="background: #e74c3c; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">Đã bán</span>'
         ];
         return $badges[$status] ?? '';
     }
@@ -73,7 +67,6 @@ class Config {
     public function getOrderStatusBadge($status) {
         $badges = [
             'pending' => '<span style="background: #f39c12; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">Chờ xử lý</span>',
-            'paid' => '<span style="background: #3498db; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">Đã thanh toán</span>',
             'completed' => '<span style="background: #2ecc71; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">Hoàn thành</span>',
             'cancelled' => '<span style="background: #e74c3c; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px;">Đã hủy</span>'
         ];
